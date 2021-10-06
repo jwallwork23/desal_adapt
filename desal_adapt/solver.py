@@ -1,6 +1,9 @@
-from thetis.solver2d import FlowSolver2d
+from pyroteus.thetis_compat import FlowSolver2d
 from thetis.utility import AttrDict, FieldDict
 from thetis.callback import CallbackManager
+
+
+__all__ = ["PlantSolver"]
 
 
 class PlantSolver(FlowSolver2d):

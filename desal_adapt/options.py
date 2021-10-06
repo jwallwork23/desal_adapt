@@ -35,6 +35,11 @@ class PlantOptions(ModelOptions2d):
         if self.discrete_pipes:
             raise NotImplementedError  # TODO
         self._isfrozen = False
+        self.tracer_timestepper_options.solver_parameters.update({
+            'ksp_converged_reason': None,
+            'ksp_type': 'gmres',
+            'pc_type': 'sor',
+        })
         self.update(kwargs)
 
     def get_update_forcings(self):
