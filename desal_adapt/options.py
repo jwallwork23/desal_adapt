@@ -31,6 +31,9 @@ class PlantOptions(ModelOptions2d):
 
     def __init__(self, **kwargs):
         super(PlantOptions, self).__init__()
+        self.tracer_element_family = 'cg'
+        if self.discrete_pipes:
+            raise NotImplementedError  # TODO
         self._isfrozen = False
         self.update(kwargs)
 
