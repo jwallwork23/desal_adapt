@@ -1,0 +1,13 @@
+data/
+outputs/
+plots/
+__pycache__/
+
+*.egg-info
+*.jpg
+*.msh
+*.pdf
+*.png
+*.pvd
+*.swp
+*.vtu
