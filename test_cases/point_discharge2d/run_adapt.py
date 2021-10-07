@@ -102,3 +102,15 @@ for i in range(maxiter):
     qoi_old = qoi
     if i + 1 == maxiter:
         raise ConvergenceError(f"Failed to converge after {maxiter} iterations.")
+
+# Plot
+fig, axes = plt.subplots(figsize=(8, 2.5))
+levels = np.linspace(0, 3, 50)
+triplot(mesh, axes=axes, interior_kw={'linewidth': 0.1}, boundary_kw={'color': 'k'})
+axes.axis(False)
+axes.set_xlim([0, 50])
+axes.set_ylim([0, 10])
+plt.tight_layout()
+cwd = os.path.join(os.path.dirname(__file__))
+plot_dir = os.path.join(cwd, 'plots', config, approach, f'{family}1', f'target{target:.0f}')
+plt.savefig(os.path.join(plot_dir, 'mesh.jpg'))
