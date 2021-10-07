@@ -16,8 +16,8 @@ config = parsed_args.configuration
 assert config in ['aligned', 'offset']
 num_refinements = parsed_args.num_refinements
 assert num_refinements >= 1
-cwd = os.path.join(os.path.dirname(__file__)
-output_dir = create_directory(cwd, 'outputs',  config, 'fixed_mesh', 'cg1'))
+cwd = os.path.join(os.path.dirname(__file__))
+output_dir = create_directory(os.path.join(cwd, 'outputs', config, 'fixed_mesh', 'cg1'))
 
 # Loop over mesh refinement levels
 lines = 'qois,dofs,elements,wallclock\n'
