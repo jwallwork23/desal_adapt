@@ -1,10 +1,11 @@
 from desal_adapt import *
 from desal_adapt.error_estimation import ErrorEstimator
+from pyadjoint import solve_adjoint, stop_annotating, get_working_tape
 from options import PointDischarge2dOptions
 
 
 # Parse arguments
-parser = Parser(prog='test_cases/point_discharge2d/run_fixed_mesh.py')
+parser = Parser(prog='test_cases/point_discharge2d/run_adapt.py')
 parser.add_argument('configuration', 'aligned', help="""
     Choose from 'aligned' and 'offset'.
     """)
@@ -19,6 +20,9 @@ parser.add_argument('-miniter', 3)
 parser.add_argument('-maxiter', 35)
 parser.add_argument('-element_rtol', 0.005)
 parser.add_argument('-qoi_rtol', 0.005)
+parser.add_argument('-h_min', 1.0e-10)
+parser.add_argument('-h_max', 1.0e+02)
+parser.add_argument('-a_max', 1.0e+05)
 parsed_args = parser.parse_args()
 config = parsed_args.configuration
 level = parsed_args.level
@@ -37,12 +41,20 @@ element_rtol = parsed_args.element_rtol
 assert element_rtol > 0.0
 qoi_rtol = parsed_args.qoi_rtol
 assert qoi_rtol > 0.0
+h_min = parsed_args.h_min
+assert h_min > 0.0
+h_max = parsed_args.h_max
+assert h_max > h_min
+a_max = parsed_args.a_max
+assert a_max > 1.0
 
 # Adapt until mesh convergence is achieved
 mesh = None
 qoi_old = None
 elements_old = None
+tape = get_working_tape()
 for i in range(maxiter):
+    tape.clear_tape()
 
     # Set parameters
     options = PointDischarge2dOptions(level=level, family=family, configuration=config, mesh=mesh)
@@ -65,13 +77,19 @@ for i in range(maxiter):
             break
 
     # Construct metric
-    ee = ErrorEstimator(options, error_estimator='difference_quotient')
+    ee = ErrorEstimator(options, error_estimator='difference_quotient', metric=approach)
     if approach == 'hessian':
         metric = ee.recover_hessian(tracer_2d)
     else:
-        raise NotImplementedError  # TODO
+        solve_adjoint(qoi)
+        solve_blocks = get_solve_blocks()
+        assert len(solve_blocks) == 1
+        adjoint_tracer_2d = solve_blocks[0].adj_sol
+        uv = solver_obj.fields.uv_2d
+        with stop_annotating():
+            metric = ee.metric(uv, tracer_2d, uv, tracer_2d, uv, adjoint_tracer_2d, uv, adjoint_tracer_2d)
     space_normalise(metric, target, p)
-    enforce_element_constraints(metric, 1.0e-10, 1.0e+02, 1.0e+05)
+    enforce_element_constraints(metric, h_min, h_max, a_max)
 
     # Adapt mesh and check convergence
     mesh = adapt(mesh, metric)

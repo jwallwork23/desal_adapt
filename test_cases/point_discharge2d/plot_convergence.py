@@ -3,7 +3,6 @@ from desal_adapt.parse import Parser
 from thetis.utility import create_directory
 import numpy as np
 import pandas as pd
-import sys
 
 
 def read_csv(approach, space='cg1'):
@@ -12,7 +11,7 @@ def read_csv(approach, space='cg1'):
         data = pd.read_csv(fname)
     except FileNotFoundError:
         print(f'File {fname} does not exist.')
-        sys.exit(0)
+        return
     return {key: np.array(value) for key, value in data.items()}
 
 
@@ -21,22 +20,32 @@ parser = Parser(prog='test_cases/point_discharge2d/plot_convergence.py')
 parser.add_argument('configuration', 'aligned', help="""
     Choose from 'aligned' and 'offset'.
     """)
+parser.add_argument('-family', 'cg')
 parsed_args = parser.parse_args()
 config = parsed_args.configuration
 assert config in ['aligned', 'offset']
-plot_dir = create_directory(os.path.join('plots', config, 'cg1'))
+family = parsed_args.family
+assert family in ['cg', 'dg']
+plot_dir = create_directory(os.path.join('plots', config, f'{family}1'))
 
 # Load data
 root_dir = os.path.join('outputs', config)
 uniform = read_csv('fixed_mesh')
-hessian = read_csv('hessian')
+tags = ['hessian', 'isotropic_dwr', 'anisotropic_dwr', 'weighted_hessian', 'weighted_gradient']
+names = ['Hessian-based', 'Isotropic DWR', 'Anisotropic DWR', 'Weighted Hessian', 'Weighted gradient']
+runs = []
+labels = []
+for tag, label in zip(tags, names):
+    data = read_csv(tag)
+    if data is not None:
+        runs.append(data)
+        labels.append(label)
+
+# QoI errors
 truth = uniform['qois'][-1]
 uniform['error'] = np.abs((uniform['qois'][:-1] - truth)/truth)
-hessian['error'] = np.abs((hessian['qois'] - truth)/truth)
-
-# Lists of all adaptive runs and their labels
-runs = [hessian]
-labels = ['Hessian-based']
+for data in runs:
+    data['error'] = np.abs((data['qois'] - truth)/truth)
 
 # Plot QoI convergence vs DoFs
 fig, axes = plt.subplots()
