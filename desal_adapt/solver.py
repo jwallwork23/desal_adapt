@@ -41,3 +41,11 @@ class PlantSolver(FlowSolver2d):
             field_metadata.pop('tracer_2d')
         self.solve_tracer = False
         self._isfrozen = True
+
+    def create_function_spaces(self):
+        super(PlantSolver, self).create_function_spaces()
+        self.options.Q_2d = self.function_spaces.Q_2d
+
+    def create_equations(self):
+        super(PlantSolver, self).create_equations()
+        self.options.test_function = self.equations.tracer_2d.test

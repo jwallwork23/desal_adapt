@@ -40,6 +40,9 @@ class ErrorEstimator(object):
         self.is_dg = self.options.tracer_element_family == 'dg'
         if self.is_dg:
             raise NotImplementedError  # TODO
+        else:
+            if self.options.use_supg_tracer:
+                assert options.test_function is not None
 
         # Error estimation parameters
         assert norm_type in ('L1', 'L2')
@@ -52,6 +55,12 @@ class ErrorEstimator(object):
             raise ValueError(f'Metric type {metric} not recognised')
         self.metric_type = metric
         self.boundary = boundary
+
+    def _replace_supg(self, f):
+        if self.options.use_supg_tracer:
+            return replace(self.options.test_function, {TestFunction(self.options.Q_2d): f})
+        else:
+            return f
 
     def _Psi_steady(self, uv, c):
         """
@@ -313,7 +322,7 @@ class ErrorEstimator(object):
         """
         Recover the Laplacian of `c`.
         """
-        proj = self.recover_gradient(c)
+        proj = self.recover_gradient(self._replace_supg(c))
         if self.norm_type == 'L1':
             return interpolate(abs(div(proj)), self.P0)
         else:
@@ -323,6 +332,8 @@ class ErrorEstimator(object):
         """
         Recover the Hessian of `c`.
         """
+        if self.metric_type == 'weighted_hessian':
+            c = self._replace_supg(c)
         return hessian_metric(recover_hessian(c, mesh=self.mesh))
 
     def difference_quotient(self, *args, flux_form=False):

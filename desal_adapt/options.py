@@ -31,10 +31,12 @@ class PlantOptions(ModelOptions2d):
 
     def __init__(self, **kwargs):
         super(PlantOptions, self).__init__()
+        self._isfrozen = False
         self.tracer_element_family = 'cg'
+        self.test_function = None
+        self.Q_2d = None
         if self.discrete_pipes:
             raise NotImplementedError  # TODO
-        self._isfrozen = False
         self.update(kwargs)
 
     def get_update_forcings(self):
