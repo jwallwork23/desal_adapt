@@ -218,7 +218,7 @@ class ErrorEstimator(object):
         else:
             return sqrt(interpolate(inner(div(proj), div(proj)), self.P0))
 
-    def recover_hessian(self, c):
+    def recover_hessian(self, uv, c):
         """
         Recover the Hessian of `c`.
         """
@@ -273,7 +273,6 @@ class ErrorEstimator(object):
         elif self.metric_type == 'isotropic_dwr':
             return isotropic_metric(self.error_indicator(*args, **kwargs))
         elif self.metric_type == 'weighted_hessian':
-            flux_form = kwargs.get('flux_form', False)
             nargs = len(args)
             assert nargs == 4 if self.steady else 8
 
@@ -282,8 +281,8 @@ class ErrorEstimator(object):
             psi = self.flux_terms(*args[:nargs//2])
 
             # Weighting term for the adjoint
-            if flux_form:
-                raise ValueError('Flux form is incompatible with WH.')
+            if kwargs.get('flux_form', False):
+                raise ValueError('Flux form is incompatible with weighted Hessian.')
             else:
                 H = self.recover_hessian(*args[nargs//2:2+nargs//2])
                 if not self.steady:  # Average recovered Hessians
@@ -293,7 +292,7 @@ class ErrorEstimator(object):
             # Combine the two
             M = Function(self.P1_ten, name='Weighted Hessian metric')
             M.project((Psi + psi/sqrt(self.h))*H)
-            M.assign(hessian_metric(M))
+            M.assign(hessian_metric(M))  # Ensure SPD
             return M
         else:
             raise NotImplementedError  # TODO

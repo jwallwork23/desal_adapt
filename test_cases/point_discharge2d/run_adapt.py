@@ -84,13 +84,13 @@ for i in range(maxiter):
 
     # Construct metric
     ee = ErrorEstimator(options, error_estimator='difference_quotient', metric=approach)
+    uv = solver_obj.fields.uv_2d
     if approach == 'hessian':
-        metric = ee.recover_hessian(tracer_2d)
+        metric = ee.recover_hessian(uv, tracer_2d)
     else:
         compute_gradient(qoi, Control(options.tracer['tracer_2d'].diffusivity))
         solve_blocks = get_solve_blocks()
         adjoint_tracer_2d = solve_blocks[-1].adj_sol
-        uv = solver_obj.fields.uv_2d
         with stop_annotating():
             metric = ee.metric(uv, tracer_2d, uv, adjoint_tracer_2d)
     space_normalise(metric, target, p)
