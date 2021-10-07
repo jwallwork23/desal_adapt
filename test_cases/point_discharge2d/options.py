@@ -91,7 +91,7 @@ class PointDischarge2dOptions(PlantOptions):
         self.tracer_timestepper_options.solver_parameters.update({
             'ksp_converged_reason': None,
             'ksp_type': 'gmres',
-            'pc_type': 'sor',
+            'pc_type': 'bjacobi',
         })
 
         # I/O

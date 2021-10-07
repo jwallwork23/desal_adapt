@@ -49,7 +49,7 @@ class ErrorEstimator(object):
         self.error_estimator = error_estimator
         if metric not in ['hessian', 'isotropic_dwr', 'weighted_hessian']:
             raise NotImplementedError  # TODO
-        self.metric = metric
+        self.metric_type = metric
         self.boundary = boundary
 
     def _Psi_steady(self, uv, c):
@@ -59,10 +59,10 @@ class ErrorEstimator(object):
         :arg uv: velocity field
         :arg c: tracer concentration
         """
-        D = self.options.horizontal_diffusivity
+        D = self.options.tracer['tracer_2d'].diffusivity
         adv = inner(uv, grad(c))
-        diff = div(D*grad(uv))
-        S = self.options.tracer.tracer_2d.source
+        diff = div(D*grad(c))
+        S = self.options.tracer['tracer_2d'].source
         return adv - diff - S
 
     def _restrict(self, v):
@@ -98,7 +98,7 @@ class ErrorEstimator(object):
         else:
             raise Exception(f'Expected two or four arguments, got {len(args)}.')
         # TODO: tracer_advective_velocity_factor?
-        D = self.horizontal_diffusivity
+        D = self.options.tracer['tracer_2d'].diffusivity
         psi = Function(self.P0)
         ibp_terms = self._restrict(inner(D*grad(c), self.n))*dS
         flux_terms = 0
@@ -116,7 +116,7 @@ class ErrorEstimator(object):
                 # Terms from boundary conditions
                 if 'value' in funcs:
                     uv_ext, c_ext = self._get_bnd_functions(uv, c, bnd_marker)
-                    uv_ext_old, c_ext_old = self._get_bnd_functions(uv_old, bnd_marker)
+                    uv_ext_old, c_ext_old = self._get_bnd_functions(uv_old, c_old, bnd_marker)
                     uv_av = 0.5*(uv + uv_ext)
                     s = 0.5*(sign(dot(uv_av, self.n)) + 1.0)
                     c_up = c_in*s + c_ext*(1-s)
@@ -128,11 +128,11 @@ class ErrorEstimator(object):
         # Compute flux norm
         mass_term = self.p0test*self.p0trial*dx
         if self.norm_type == 'L1':
-            flux_terms = 2*avg(self.p0test)*abs(flux_terms)*dS
-            bnd_terms = sum(self.p0test*abs(term)*ds_bnd for ds_bnd, term in bnd_terms)
+            flux_terms = 2*avg(self.p0test)*abs(flux_terms)*dS(domain=self.mesh)
+            bnd_terms = sum(self.p0test*abs(term)*ds_bnd for ds_bnd, term in bnd_terms.items())
         else:
-            flux_terms = 2*avg(self.p0test)*flux_terms*flux_terms*dS
-            bnd_terms = sum(self.p0test*term*term*ds_bnd for ds_bnd, term in bnd_terms)
+            flux_terms = 2*avg(self.p0test)*flux_terms*flux_terms*dS(domain=self.mesh)
+            bnd_terms = sum(self.p0test*term*term*ds_bnd for ds_bnd, term in bnd_terms.items())
         sp = {
             'mat_type': 'matfree',
             'snes_type': 'ksponly',
@@ -197,7 +197,7 @@ class ErrorEstimator(object):
         # TODO: Account for boundary conditions
         return self._psi_steady(*args) if self.steady else self._psi_unsteady(*args)
 
-    def recover_laplacian(self, c):
+    def recover_laplacian(self, uv, c):
         """
         Recover the Laplacian of `c`.
         """
@@ -266,13 +266,13 @@ class ErrorEstimator(object):
         """
         Construct the metric of choice.
         """
-        if self.metric == 'hessian':
+        if self.metric_type == 'hessian':
             if not self.steady:
                 raise NotImplementedError  # TODO
             return self.recover_hessian(args[1])
-        elif self.metric == 'isotropic_dwr':
+        elif self.metric_type == 'isotropic_dwr':
             return isotropic_metric(self.error_indicator(*args, **kwargs))
-        elif self.metric == 'weighted_hessian':
+        elif self.metric_type == 'weighted_hessian':
             flux_form = kwargs.get('flux_form', False)
             nargs = len(args)
             assert nargs == 4 if self.steady else 8

@@ -1,6 +1,8 @@
 from desal_adapt import *
 from desal_adapt.error_estimation import ErrorEstimator
-from pyadjoint import solve_adjoint, stop_annotating, get_working_tape
+from desal_adapt.plotting import *
+from firedrake_adjoint import *
+from firedrake.adjoint.solving import get_solve_blocks
 from options import PointDischarge2dOptions
 
 
@@ -9,11 +11,11 @@ parser = Parser(prog='test_cases/point_discharge2d/run_adapt.py')
 parser.add_argument('configuration', 'aligned', help="""
     Choose from 'aligned' and 'offset'.
     """)
+parser.add_argument('approach', 'hessian')
 parser.add_argument('-level', 0, help="""
     Base mesh resolution level (default 0).
     """)
 parser.add_argument('-family', 'cg')
-parser.add_argument('-approach', 'hessian')
 parser.add_argument('-target', 4000.0)
 parser.add_argument('-norm_order', 1.0)
 parser.add_argument('-miniter', 3)
@@ -28,7 +30,6 @@ config = parsed_args.configuration
 level = parsed_args.level
 family = parsed_args.family
 approach = parsed_args.approach
-assert approach in ['hessian']
 target = parsed_args.target
 assert target > 0.0
 p = parsed_args.norm_order
@@ -81,13 +82,12 @@ for i in range(maxiter):
     if approach == 'hessian':
         metric = ee.recover_hessian(tracer_2d)
     else:
-        solve_adjoint(qoi)
+        compute_gradient(qoi, Control(options.tracer['tracer_2d'].diffusivity))
         solve_blocks = get_solve_blocks()
-        assert len(solve_blocks) == 1
-        adjoint_tracer_2d = solve_blocks[0].adj_sol
+        adjoint_tracer_2d = solve_blocks[-1].adj_sol
         uv = solver_obj.fields.uv_2d
         with stop_annotating():
-            metric = ee.metric(uv, tracer_2d, uv, tracer_2d, uv, adjoint_tracer_2d, uv, adjoint_tracer_2d)
+            metric = ee.metric(uv, tracer_2d, uv, adjoint_tracer_2d)
     space_normalise(metric, target, p)
     enforce_element_constraints(metric, h_min, h_max, a_max)
 
@@ -112,5 +112,5 @@ axes.set_xlim([0, 50])
 axes.set_ylim([0, 10])
 plt.tight_layout()
 cwd = os.path.join(os.path.dirname(__file__))
-plot_dir = os.path.join(cwd, 'plots', config, approach, f'{family}1', f'target{target:.0f}')
-plt.savefig(os.path.join(plot_dir, 'mesh.jpg'))
+plot_dir = os.path.join(cwd, 'plots', config, f'{family}1')
+plt.savefig(os.path.join(create_directory(plot_dir), f'{approach}_mesh_target{target:.0f}.jpg'), dpi=300)

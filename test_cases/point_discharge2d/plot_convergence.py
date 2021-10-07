@@ -10,7 +10,7 @@ def read_csv(approach, space='cg1'):
     try:
         data = pd.read_csv(fname)
     except FileNotFoundError:
-        print(f'File {fname} does not exist.')
+        print(f'File "{fname}" does not exist.')
         return
     return {key: np.array(value) for key, value in data.items()}
 
@@ -33,6 +33,7 @@ root_dir = os.path.join('outputs', config)
 uniform = read_csv('fixed_mesh')
 tags = ['hessian', 'isotropic_dwr', 'anisotropic_dwr', 'weighted_hessian', 'weighted_gradient']
 names = ['Hessian-based', 'Isotropic DWR', 'Anisotropic DWR', 'Weighted Hessian', 'Weighted gradient']
+markers = ['*', '^', 'V', 'o', 'h']
 runs = []
 labels = []
 for tag, label in zip(tags, names):
@@ -50,8 +51,8 @@ for data in runs:
 # Plot QoI convergence vs DoFs
 fig, axes = plt.subplots()
 axes.semilogx(uniform['dofs'], uniform['qois'], '--', marker='x', label='Uniform')
-for data, label in zip(runs, labels):
-    axes.semilogx(data['dofs'], data['qois'], '--', marker='x', label=label)
+for data, label, marker in zip(runs, labels, markers):
+    axes.semilogx(data['dofs'], data['qois'], '--', marker=marker, label=label)
 axes.set_xlabel('DoF count')
 axes.set_ylabel('Quantity of interest')
 axes.grid(True)
@@ -61,8 +62,8 @@ plt.savefig(os.path.join(plot_dir, 'dofs_vs_qoi.jpg'))
 # Plot QoI error convergence vs DoFs
 fig, axes = plt.subplots()
 axes.loglog(uniform['dofs'][:-1], uniform['error'], '--', marker='x', label='Uniform')
-for data, label in zip(runs, labels):
-    axes.loglog(data['dofs'], data['error'], '--', marker='x', label=label)
+for data, label, marker in zip(runs, labels, markers):
+    axes.loglog(data['dofs'], data['error'], '--', marker=marker, label=label)
 axes.set_xlabel('DoF count')
 axes.set_ylabel('Relative QoI error')
 axes.grid(True)
@@ -72,8 +73,8 @@ plt.savefig(os.path.join(plot_dir, 'dofs_vs_qoi_error.jpg'))
 # Plot QoI error convergence vs wallclock
 fig, axes = plt.subplots()
 axes.loglog(uniform['wallclock'][:-1], uniform['error'], '--', marker='x', label='Uniform')
-for i, (data, label) in enumerate(zip(runs, labels)):
-    axes.loglog(data['wallclock'], data['error'], '--', marker='x', label=label)
+for i, (data, label, marker) in enumerate(zip(runs, labels, markers)):
+    axes.loglog(data['wallclock'], data['error'], '--', marker=marker, label=label)
     for wc, err, it in zip(data['wallclock'], data['error'], data['iterations']):
         axes.annotate(it, (wc, err), color=f'C{i+1}')
 axes.set_xlabel(r'CPU time [$\mathrm s$]')
