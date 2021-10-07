@@ -53,6 +53,12 @@ class ErrorEstimator(object):
         self.boundary = boundary
 
     def _Psi_steady(self, uv, c):
+        """
+        Strong residual for steady state mode.
+
+        :arg uv: velocity field
+        :arg c: tracer concentration
+        """
         D = self.options.horizontal_diffusivity
         adv = inner(uv, grad(c))
         diff = div(D*grad(uv))
@@ -60,15 +66,30 @@ class ErrorEstimator(object):
         return adv - diff - S
 
     def _restrict(self, v):
+        """
+        Restrict an expression `v` over facets, according to the :attr:`norm_type`.
+
+        :arg v: the UFL expression
+        """
         return jump(abs(v), self.p0test) if self.norm_type == 'L1' else jump(v*v, self.p0test)
 
     def _get_bnd_functions(self, uv_in, c_in, bnd_in):
+        """
+        Get boundary contributions on segment `bnd_in`.
+
+        :arg uv_in: the current velocity
+        :arg c_in: the current tracer concentration
+        :arg bnd_in: the boundary marker
+        """
         funcs = self.options.bnd_conditions.get(bnd_in)
         uv_ext = funcs['uv'] if 'uv' in funcs else uv_in
         c_ext = funcs['value'] if 'value' in funcs else c_in
         return uv_ext, c_ext
 
     def _psi_steady(self, *args):
+        """
+        Inter-element flux contributions for steady state mode.
+        """
         if len(args) == 2:
             uv, c = args
             uv_old, c_old = uv, c
@@ -79,7 +100,7 @@ class ErrorEstimator(object):
         # TODO: tracer_advective_velocity_factor?
         D = self.horizontal_diffusivity
         psi = Function(self.P0)
-        ibp_terms = inner(D*grad(c), self.n)
+        ibp_terms = self._restrict(inner(D*grad(c), self.n))*dS
         flux_terms = 0
         bnd_terms = {}
         if self.boundary:
@@ -108,11 +129,9 @@ class ErrorEstimator(object):
         mass_term = self.p0test*self.p0trial*dx
         if self.norm_type == 'L1':
             flux_terms = 2*avg(self.p0test)*abs(flux_terms)*dS
-            ibp_terms = self._restrict(abs(ibp_terms))*dS
             bnd_terms = sum(self.p0test*abs(term)*ds_bnd for ds_bnd, term in bnd_terms)
         else:
             flux_terms = 2*avg(self.p0test)*flux_terms*flux_terms*dS
-            ibp_terms = self._restrict(ibp_terms*ibp_terms)*dS
             bnd_terms = sum(self.p0test*term*term*ds_bnd for ds_bnd, term in bnd_terms)
         sp = {
             'mat_type': 'matfree',
@@ -125,15 +144,31 @@ class ErrorEstimator(object):
         psi.interpolate(abs(psi))
         return sqrt(psi) if self.norm_type == 'L2' else psi
 
-    def _Psi_unsteady(self, c, c_old):
-        f_time = (uv[0] - uv_old[0])/self.options.timestep
-        f = self._Psi_steady(c)
-        f_old = self._Psi_steady(c_old)
+    def _Psi_unsteady(self, uv, c, uv_old, c_old):
+        """
+        Strong residual for unsteady mode.
+
+        :arg uv: velocity field at current timestep
+        :arg c: tracer concentration at current timestep
+        :arg uv_old: velocity field at previous timestep
+        :arg c_old: tracer concentration at previous timestep
+        """
+        f_time = (c[0] - c_old[0])/self.options.timestep
+        f = self._Psi_steady(uv, c)
+        f_old = self._Psi_steady(uv_old, c_old)
         return f_time + self.theta*f + (1-self.theta)*f_old
 
-    def _psi_unsteady(self, c, c_old):
-        f = self._psi_steady(c, c)    # NOTE: Not semi-implicit
-        f_old = self._psi_steady(c_old, c_old)
+    def _psi_unsteady(self, uv, c, uv_old, c_old):
+        """
+        Inter-element flux terms for unsteady mode.
+
+        :arg uv: velocity field at current timestep
+        :arg c: tracer concentration at current timestep
+        :arg uv_old: velocity field at previous timestep
+        :arg c_old: tracer concentration at previous timestep
+        """
+        f = self._psi_steady(uv, c, uv, c)    # NOTE: Not semi-implicit
+        f_old = self._psi_steady(uv_old, c_old, uv_old, c_old)
         return self.theta*f + (1-self.theta)*f_old
 
     def strong_residual(self, *args):
@@ -164,8 +199,7 @@ class ErrorEstimator(object):
 
     def recover_laplacian(self, c):
         """
-        Recover the Laplacian of solution
-        tuple `(uv, elev)`.
+        Recover the Laplacian of `c`.
         """
         P1_vec = VectorFunctionSpace(self.mesh, 'CG', 1)
         g, phi = TrialFunction(P1_vec), TestFunction(P1_vec)
@@ -186,7 +220,7 @@ class ErrorEstimator(object):
 
     def recover_hessian(self, c):
         """
-        Recover the Hessian of the solution.
+        Recover the Hessian of `c`.
         """
         return hessian_metric(recover_hessian(c, mesh=self.mesh))
 
@@ -219,6 +253,9 @@ class ErrorEstimator(object):
         return dq
 
     def error_indicator(self, *args, **kwargs):
+        """
+        Evaluate the error indicator of choice.
+        """
         if self.error_estimator == 'difference_quotient':
             flux_form = kwargs.get('flux_form', False)
             return self.difference_quotient(*args, flux_form=flux_form)
@@ -226,6 +263,9 @@ class ErrorEstimator(object):
             raise NotImplementedError  # TODO
 
     def metric(self, *args, **kwargs):
+        """
+        Construct the metric of choice.
+        """
         if self.metric == 'hessian':
             if not self.steady:
                 raise NotImplementedError  # TODO
