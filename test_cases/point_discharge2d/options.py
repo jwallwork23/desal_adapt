@@ -90,6 +90,7 @@ class PointDischarge2dOptions(PlantOptions):
         # Solver parameters
         self.tracer_timestepper_options.solver_parameters.update({
             'ksp_converged_reason': None,
+            'ksp_max_it': 10000,
             'ksp_type': 'gmres',
             'pc_type': 'bjacobi',
         })

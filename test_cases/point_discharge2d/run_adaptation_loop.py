@@ -79,12 +79,17 @@ for level in range(num_refinements + 1):
         options.apply_initial_conditions(solver_obj)
 
         # Solve
-        solver_obj.iterate(update_forcings=options.update_forcings, export_func=options.export_func)
+        try:
+            solver_obj.iterate()
+        except firedrake.ConvergenceError:
+            print_output(f'Failed to converge with iterative solver parameters, trying direct.')
+            options.tracer_timestepper_options.solver_parameters['pc_type'] = 'lu'
+            solver_obj.iterate()
         tracer_2d = solver_obj.fields.tracer_2d
         qoi = options.qoi(tracer_2d)
         if qoi_old is not None and i > miniter:
             if np.abs(qoi - qoi_old) < qoi_rtol*np.abs(qoi_old):
-                print_output(f"Converged after {i+1} iterations due to QoI convergence.")
+                print_output(f'Converged after {i+1} iterations due to QoI convergence.')
                 break
 
         # Construct metric
