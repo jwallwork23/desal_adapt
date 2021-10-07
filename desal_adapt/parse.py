@@ -48,6 +48,10 @@ class Parser(object):
                 Order p used in L-p space-time normalisation (default {:}). Choose a value
                 greater than or equal to one, or 'inf' to specify L-infinity normalisation.
                 """},
+            'convergence_rate': {'type': float, 'msg': """
+                Convergence rate for the anisotropic DWR metric (default {:}). Choose a value
+                greater than or equal to one.
+                """},
             'target': {'type': float, 'msg': """
                 Target *spatial* complexity (default {:.4e}), i.e. metric complexity
                 associated with a single mesh iteration.

@@ -34,7 +34,7 @@ root_dir = os.path.join('outputs', config)
 uniform = read_csv('fixed_mesh')
 tags = ['hessian', 'isotropic_dwr', 'anisotropic_dwr', 'weighted_hessian', 'weighted_gradient']
 names = ['Hessian-based', 'Isotropic DWR', 'Anisotropic DWR', 'Weighted Hessian', 'Weighted gradient']
-markers = ['*', '^', 'V', 'o', 'h']
+markers = ['*', '^', 'v', 'o', 'h']
 runs = []
 labels = []
 for tag, label in zip(tags, names):

@@ -17,6 +17,7 @@ parser.add_argument('-num_refinements', 4, help="""
     """)
 parser.add_argument('-family', 'cg')
 parser.add_argument('-norm_order', 1.0)
+parser.add_argument('-convergence_rate', 2.0)
 parser.add_argument('-miniter', 3)
 parser.add_argument('-maxiter', 35)
 parser.add_argument('-element_rtol', 0.005)
@@ -32,6 +33,8 @@ assert num_refinements >= 1
 approach = parsed_args.approach
 p = parsed_args.norm_order
 assert p >= 1.0
+alpha = parsed_args.convergence_rate
+assert alpha >= 1.0
 miniter = parsed_args.miniter
 assert miniter >= 0
 maxiter = parsed_args.maxiter
@@ -55,8 +58,8 @@ tape = get_working_tape()
 if approach == 'hessian':
     stop_annotating()
 for level in range(num_refinements + 1):
-    msg = f'Refinement {level}/{num_refinements}'
-    print_output('\n'.join(['*'*len(msg), msg, '*'*len(msg)]))
+    msg = f'Refinement {level}/{num_refinements} ({approach}, {config})'
+    print_output('\n'.join(['\n', '*'*len(msg), msg, '*'*len(msg)]))
     cpu_timestamp = perf_counter()
     target = 1000.0*4.0**level
 
@@ -102,8 +105,11 @@ for level in range(num_refinements + 1):
             solve_blocks = get_solve_blocks()
             adjoint_tracer_2d = solve_blocks[-1].adj_sol
             with stop_annotating():
-                metric = ee.metric(uv, tracer_2d, uv, adjoint_tracer_2d)
-        space_normalise(metric, target, p)
+                metric = ee.metric(uv, tracer_2d, uv, adjoint_tracer_2d,
+                                   convergence_rate=alpha,
+                                   target_complexity=target)
+        if approach != 'anisotropic_dwr':
+            space_normalise(metric, target, p)
         enforce_element_constraints(metric, h_min, h_max, a_max)
 
         # Adapt mesh and check convergence
