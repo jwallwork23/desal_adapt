@@ -96,9 +96,10 @@ for i in range(maxiter):
         adjoint_tracer_2d = solve_blocks[-1].adj_sol
         with stop_annotating():
             metric = ee.metric(uv, tracer_2d, uv, adjoint_tracer_2d,
+                               target_complexity=target,
                                convergence_rate=alpha,
-                               target_complexity=target)
-    if approach != 'anisotropic_dwr':
+                               norm_order=p)
+    if approach not in ('anisotropic_dwr', 'weighted_gradient'):
         space_normalise(metric, target, p)
     enforce_element_constraints(metric, h_min, h_max, a_max)
 

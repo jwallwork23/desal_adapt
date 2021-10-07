@@ -90,18 +90,18 @@ class ErrorEstimator(object):
             bnd_conditions = self.options.bnd_conditions
             for bnd_marker in bnd_conditions:
                 funcs = bnd_conditions.get(bnd_marker)
-                ds_bnd = ds(int(bnd_marker))
-                bnd_terms[ds_bnd] = D*grad(c)
+                tag = int(bnd_marker)
+                bnd_terms[tag] = dot(D*grad(c), self.n)
+                c_in = c
                 if 'value' in funcs:
                     uv_ext, c_ext = self._get_bnd_functions(uv, c, bnd_marker)
-                    uv_ext_old, c_ext_old = self._get_bnd_functions(uv_old, c_old, bnd_marker)
                     uv_av = 0.5*(uv + uv_ext)
                     s = 0.5*(sign(dot(uv_av, self.n)) + 1.0)
                     c_up = c_in*s + c_ext*(1-s)
                     diff_flux_up = D*grad(c_up)
-                    bnd_terms[ds_bnd] += -dot(diff_flux_up, self.n)
+                    bnd_terms[tag] += -dot(diff_flux_up, self.n)
                 elif 'diff_flux' in funcs:
-                    bnd_terms[ds_bnd] += -funcs['diff_flux']
+                    bnd_terms[tag] += -funcs['diff_flux']
         return bnd_terms
 
     def _source_steady(self):
@@ -243,7 +243,7 @@ class ErrorEstimator(object):
         """
         f = self._bnd_potential_steady(uv, c)
         f_old = self._bnd_potential_steady(uv_old, c_old)
-        return {ds_bnd: self.theta*f[ds_bnd] + (1-self.theta)*f_old[ds_bnd] for ds_bnd in f}
+        return {tag: self.theta*f[tag] + (1-self.theta)*f_old[tag] for tag in f}
 
     def _source_unsteady(self):
         """
@@ -408,7 +408,7 @@ class ErrorEstimator(object):
             # Combine the two
             return anisotropic_metric([ee], [H], target_space=self.P1_ten, **kwargs)
         elif self.metric_type == 'weighted_gradient':
-            potentials = self.potential(*args[:nargs//2])
+            F = self.potential(*args[:nargs//2])
             adj = args[nargs//2+1]  # NOTE: Only picks current adjoint solution
             g = self.recover_gradient(adj)
             if not self.steady:
@@ -416,15 +416,34 @@ class ErrorEstimator(object):
 
             # Interior metric
             P1_ten = TensorFunctionSpace(self.mesh, "CG", 1)
-            H0 = interpolate(self.recover_hessian('unused', potentials[0])*g[0], P1_ten)
+            H0 = interpolate(self.recover_hessian('unused', F[0])*g[0], P1_ten)
             H0 = hessian_metric(H0)
-            H1 = interpolate(self.recover_hessian('unused', potentials[1])*g[1], P1_ten)
+            H1 = interpolate(self.recover_hessian('unused', F[1])*g[1], P1_ten)
             H1 = hessian_metric(H1)
             Hs = interpolate(self.recover_hessian('unused', self.source())*adj, P1_ten)
             Hs = hessian_metric(Hs)
-            return combine_metrics(H0, H1, Hs, average=kwargs.get('average', False))
+            Hint = combine_metrics(H0, H1, Hs, average=kwargs.get('average', False))
 
-            # Boundary metric  # TODO
-            bnd_potentials = self.bnd_potential(*args[:nargs//2])
+            # Get tags related to Neumann and natural conditions
+            tags = self.mesh.exterior_facets.unique_markers
+            bcs = {tag: self.options.bnd_conditions.get(tag) or {} for tag in tags}
+            tags = [tag for tag in tags if 'value' not in bcs[tag]]
+
+            # Boundary metric
+            Fbar = self.bnd_potential(*args[:nargs//2])
+            Hbar = interpolate(recover_boundary_hessian(Fbar, mesh=self.mesh)*adj, P1_ten)
+            Hbar.interpolate(abs(Hbar))
+
+            # Adjust target complexity
+            target = kwargs.get('target_complexity')
+            p = kwargs.get('norm_order')
+            C = volume_and_surface_contributions(Hint, Hbar, target, p)
+
+            # Normalise the two metrics
+            space_normalise(Hint, target, p, global_factor=C, boundary=False)
+            space_normalise(Hbar, target, p, global_factor=C, boundary=True)
+
+            # Combine the two
+            return metric_intersection(Hint, Hbar, boundary_tag=tags)
         else:
             raise ValueError(f'Metric type {metric} not recognised')
