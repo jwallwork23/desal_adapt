@@ -11,6 +11,7 @@ parser.add_argument('configuration', 'aligned', help="""
 parser.add_argument('-level', 0, help="""
     Base mesh resolution level (default 0).
     """)
+parser.add_argument('-family', 'cg')
 parser.add_argument('-approach', 'hessian')
 parser.add_argument('-target', 4000.0)
 parser.add_argument('-norm_order', 1.0)
@@ -20,9 +21,8 @@ parser.add_argument('-element_rtol', 0.005)
 parser.add_argument('-qoi_rtol', 0.005)
 parsed_args = parser.parse_args()
 config = parsed_args.configuration
-assert config in ['aligned', 'offset']
 level = parsed_args.level
-assert level >= 0
+family = parsed_args.family
 approach = parsed_args.approach
 assert approach in ['hessian']
 target = parsed_args.target
@@ -45,9 +45,9 @@ elements_old = None
 for i in range(maxiter):
 
     # Set parameters
-    options = PointDischarge2dOptions(level=level, configuration=config, mesh=mesh)
+    options = PointDischarge2dOptions(level=level, family=family, configuration=config, mesh=mesh)
     mesh = options.mesh2d
-    output_dir = os.path.join(options.output_directory, config, approach, 'cg1', f'target{target:.0f}')
+    output_dir = os.path.join(options.output_directory, config, approach, f'{family}1', f'target{target:.0f}')
     options.output_directory = create_directory(output_dir)
 
     # Create solver

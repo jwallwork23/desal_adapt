@@ -86,7 +86,13 @@ class PointDischarge2dOptions(PlantOptions):
         self.timestep = 20.0
         self.simulation_export_time = 18.0
         self.simulation_end_time = 18.0
-        self.tracer_timestepper_options.solver_parameters['ksp_converged_reason'] = None
+
+        # Solver parameters
+        self.tracer_timestepper_options.solver_parameters.update({
+            'ksp_converged_reason': None,
+            'ksp_type': 'gmres',
+            'pc_type': 'sor',
+        })
 
         # I/O
         self.fields_to_export = ['tracer_2d']

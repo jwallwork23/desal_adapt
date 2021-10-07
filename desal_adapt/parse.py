@@ -13,6 +13,9 @@ class Parser(object):
             'approach': {'type': str, 'msg': """
                 Mesh adaptation approach (default '{:s}').
                 """},
+            'family': {'type': str, 'msg': """
+                Tracer finite element family (default '{:s}').
+                """},
             'error_indicator': {'type': str, 'msg': """
                 Error indicator formulation (default '{:s}').
                 """},

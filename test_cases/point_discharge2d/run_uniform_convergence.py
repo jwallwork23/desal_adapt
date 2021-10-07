@@ -8,16 +8,17 @@ parser = Parser(prog='test_cases/point_discharge2d/run_uniform_convergence.py')
 parser.add_argument('configuration', 'aligned', help="""
     Choose from 'aligned' and 'offset'.
     """)
-parser.add_argument('-num_refinements', 5, help="""
-    Number of mesh refinements to consider (default 5).
+parser.add_argument('-num_refinements', 6, help="""
+    Number of mesh refinements to consider (default 6).
     """)
+parser.add_argument('-family', 'cg')
 parsed_args = parser.parse_args()
 config = parsed_args.configuration
-assert config in ['aligned', 'offset']
 num_refinements = parsed_args.num_refinements
 assert num_refinements >= 1
+family = parsed_args.family
 cwd = os.path.join(os.path.dirname(__file__))
-output_dir = create_directory(os.path.join(cwd, 'outputs', config, 'fixed_mesh', 'cg1'))
+output_dir = create_directory(os.path.join(cwd, 'outputs', config, 'fixed_mesh', f'{family}1'))
 
 # Loop over mesh refinement levels
 lines = 'qois,dofs,elements,wallclock\n'
@@ -25,7 +26,7 @@ for level in range(num_refinements + 1):
     cpu_timestamp = perf_counter()
 
     # Set parameters
-    options = PointDischarge2dOptions(level=level, configuration=config)
+    options = PointDischarge2dOptions(level=level, family=family, configuration=config)
     options.output_directory = output_dir
     options.fields_to_export = []
 
