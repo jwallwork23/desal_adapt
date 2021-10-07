@@ -101,6 +101,7 @@ class ErrorEstimator(object):
         mass_term = self.p0test*self.p0trial*dx
         ibp_terms = self._restrict(ibp_terms)*dS
         flux_terms = ibp_terms + bnd_terms
+        raise ValueError  # FIXME: not done properly
         if self.norm_type == 'L1':
             flux_terms = 2*avg(self.p0test)*abs(flux_terms)*dS
         else:

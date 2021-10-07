@@ -1,6 +1,7 @@
 from pyroteus.thetis_compat import FlowSolver2d
 from thetis.utility import AttrDict, FieldDict
 from thetis.callback import CallbackManager
+from thetis.field_defs import field_metadata
 
 
 __all__ = ["PlantSolver"]
@@ -36,4 +37,7 @@ class PlantSolver(FlowSolver2d):
         self.export_initial_state = True
         self.sediment_model = None
         self.bnd_functions = {'shallow_water': {}, 'tracer': {}, 'sediment': {}}
+        if 'tracer_2d' in field_metadata:
+            field_metadata.pop('tracer_2d')
+        self.solve_tracer = False
         self._isfrozen = True

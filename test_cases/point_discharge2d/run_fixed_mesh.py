@@ -18,7 +18,7 @@ assert level >= 0
 
 # Set parameters
 options = PointDischarge2dOptions(level=level, configuration=config)
-output_dir = os.path.join(options.output_directory, config, 'fixed_mesh', f'level{level}')
+output_dir = os.path.join(options.output_directory, config, 'fixed_mesh', 'cg1', f'level{level}')
 options.output_directory = create_directory(output_dir)
 
 # Create solver
