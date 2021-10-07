@@ -64,8 +64,8 @@ for i in range(maxiter):
             print_output(f"Converged after {i+1} iterations due to QoI convergence.")
             break
 
-    # Construct metric  # TODO: ee can just get mesh from options
-    ee = ErrorEstimator(options, mesh=mesh, error_estimator='difference_quotient')
+    # Construct metric
+    ee = ErrorEstimator(options, error_estimator='difference_quotient')
     if approach == 'hessian':
         metric = ee.recover_hessian(tracer_2d)
     else:

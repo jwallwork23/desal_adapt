@@ -3,10 +3,16 @@ from desal_adapt.parse import Parser
 from thetis.utility import create_directory
 import numpy as np
 import pandas as pd
+import sys
 
 
 def read_csv(approach, space='cg1'):
-    data = pd.read_csv(os.path.join(root_dir, approach, space, 'convergence.log'))
+    fname = os.path.join(root_dir, approach, space, 'convergence.log')
+    try:
+        data = pd.read_csv(fname)
+    except FileNotFoundError:
+        print(f'File {fname} does not exist.')
+        sys.exit(0)
     return {key: np.array(value) for key, value in data.items()}
 
 
@@ -28,36 +34,49 @@ truth = uniform['qois'][-1]
 uniform['error'] = np.abs((uniform['qois'][:-1] - truth)/truth)
 hessian['error'] = np.abs((hessian['qois'] - truth)/truth)
 
+# Lists of all adaptive runs and their labels
+runs = [hessian]
+labels = ['Hessian-based']
+
 # Plot QoI convergence vs DoFs
 fig, axes = plt.subplots()
 axes.semilogx(uniform['dofs'], uniform['qois'], '--', marker='x', label='Uniform')
-axes.semilogx(hessian['dofs'], hessian['qois'], '--', marker='x', label='Hessian-based')
+for data, label in zip(runs, labels):
+    axes.semilogx(data['dofs'], data['qois'], '--', marker='x', label=label)
 axes.set_xlabel('DoF count')
 axes.set_ylabel('Quantity of interest')
 axes.grid(True)
-axes.legend()
 plt.tight_layout()
 plt.savefig(os.path.join(plot_dir, 'dofs_vs_qoi.jpg'))
 
 # Plot QoI error convergence vs DoFs
 fig, axes = plt.subplots()
 axes.loglog(uniform['dofs'][:-1], uniform['error'], '--', marker='x', label='Uniform')
-axes.loglog(hessian['dofs'], hessian['error'], '--', marker='x', label='Hessian-based')
+for data, label in zip(runs, labels):
+    axes.loglog(data['dofs'], data['error'], '--', marker='x', label=label)
 axes.set_xlabel('DoF count')
 axes.set_ylabel('Relative QoI error')
 axes.grid(True)
-axes.legend()
 plt.tight_layout()
 plt.savefig(os.path.join(plot_dir, 'dofs_vs_qoi_error.jpg'))
 
 # Plot QoI error convergence vs wallclock
 fig, axes = plt.subplots()
 axes.loglog(uniform['wallclock'][:-1], uniform['error'], '--', marker='x', label='Uniform')
-axes.loglog(hessian['wallclock'], hessian['error'], '--', marker='x', label='Hessian-based')
-# TODO: Annotate with iteration counts
+for i, (data, label) in enumerate(zip(runs, labels)):
+    axes.loglog(data['wallclock'], data['error'], '--', marker='x', label=label)
+    for wc, err, it in zip(data['wallclock'], data['error'], data['iterations']):
+        axes.annotate(it, (wc, err), color=f'C{i+1}')
 axes.set_xlabel(r'CPU time [$\mathrm s$]')
 axes.set_ylabel('Relative QoI error')
 axes.grid(True)
-axes.legend()
 plt.tight_layout()
 plt.savefig(os.path.join(plot_dir, 'time_vs_qoi_error.jpg'))
+
+# Plot legend
+fig2, axes2 = plt.subplots()
+legend = axes2.legend(*axes.get_legend_handles_labels(), fontsize=18, frameon=False)
+fig2.canvas.draw()
+axes2.set_axis_off()
+bbox = legend.get_window_extent().transformed(fig2.dpi_scale_trans.inverted())
+plt.savefig(os.path.join(plot_dir, 'legend.jpg'), bbox_inches=bbox)
