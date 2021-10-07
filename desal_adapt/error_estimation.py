@@ -1,4 +1,5 @@
 from thetis import *
+from pyroteus import *
 
 
 __all__ = ["ErrorEstimator"]
