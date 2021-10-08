@@ -101,8 +101,13 @@ for level in range(num_refinements + 1):
         if approach == 'hessian':
             metric = ee.recover_hessian(uv, tracer_2d)
         else:
-            compute_gradient(qoi, Control(options.tracer['tracer_2d'].diffusivity))
             solve_blocks = get_solve_blocks()
+            try:
+                compute_gradient(qoi, Control(options.tracer['tracer_2d'].diffusivity))
+            except firedrake.ConvergenceError:
+                print_output(f'Failed to converge with iterative solver parameters, trying direct.')
+                solve_blocks[-1].adj_kwargs['solver_parameters']['pc_type'] = 'lu'
+                compute_gradient(qoi, Control(options.tracer['tracer_2d'].diffusivity))
             adjoint_tracer_2d = solve_blocks[-1].adj_sol
             with stop_annotating():
                 metric = ee.metric(uv, tracer_2d, uv, adjoint_tracer_2d,
