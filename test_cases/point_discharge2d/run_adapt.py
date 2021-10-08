@@ -18,7 +18,7 @@ parser.add_argument('-level', 0, help="""
 parser.add_argument('-family', 'cg')
 parser.add_argument('-target', 4000.0)
 parser.add_argument('-norm_order', 1.0)
-parser.add_argument('-convergence_rate', 2.0)
+parser.add_argument('-convergence_rate', 6.0)
 parser.add_argument('-miniter', 3)
 parser.add_argument('-maxiter', 35)
 parser.add_argument('-element_rtol', 0.005)
@@ -26,6 +26,7 @@ parser.add_argument('-qoi_rtol', 0.005)
 parser.add_argument('-h_min', 1.0e-10)
 parser.add_argument('-h_max', 1.0e+02)
 parser.add_argument('-a_max', 1.0e+05)
+parser.add_argument('-flux_form', False)
 parsed_args = parser.parse_args()
 config = parsed_args.configuration
 level = parsed_args.level
@@ -51,6 +52,7 @@ h_max = parsed_args.h_max
 assert h_max > h_min
 a_max = parsed_args.a_max
 assert a_max > 1.0
+flux_form = parsed_args.flux_form
 
 # Adapt until mesh convergence is achieved
 mesh = None
@@ -103,7 +105,8 @@ for i in range(maxiter):
             metric = ee.metric(uv, tracer_2d, uv, adjoint_tracer_2d,
                                target_complexity=target,
                                convergence_rate=alpha,
-                               norm_order=p)
+                               norm_order=p,
+                               flux_form=flux_form)
     if approach not in ('anisotropic_dwr', 'weighted_gradient'):
         space_normalise(metric, target, p)
     enforce_element_constraints(metric, h_min, h_max, a_max)
