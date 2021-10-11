@@ -69,7 +69,7 @@ for i in range(maxiter):
     options.output_directory = create_directory(output_dir)
 
     # Create solver
-    solver_obj = PlantSolver(options)
+    solver_obj = PlantSolver2d(options)
     options.apply_boundary_conditions(solver_obj)
     options.apply_initial_conditions(solver_obj)
 

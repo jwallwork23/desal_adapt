@@ -22,7 +22,7 @@ output_dir = os.path.join(options.output_directory, config, 'fixed_mesh', f'{fam
 options.output_directory = create_directory(output_dir)
 
 # Create solver
-solver_obj = PlantSolver(options)
+solver_obj = PlantSolver2d(options)
 options.apply_boundary_conditions(solver_obj)
 options.apply_initial_conditions(solver_obj)
 

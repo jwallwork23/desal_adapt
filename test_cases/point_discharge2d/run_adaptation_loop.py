@@ -79,7 +79,7 @@ for level in range(num_refinements + 1):
         options.fields_to_export = []
 
         # Create solver
-        solver_obj = PlantSolver(options)
+        solver_obj = PlantSolver2d(options)
         options.apply_boundary_conditions(solver_obj)
         options.apply_initial_conditions(solver_obj)
 
