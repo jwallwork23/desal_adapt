@@ -109,9 +109,8 @@ class PointDischarge3dOptions(PlantOptions):
         })
 
         # I/O
-        self.fields_to_export = ['tracer_3d']
+        self.fields_to_export = []
         self.fields_to_export_hdf5 = []
-        self.no_exports = True
 
         self._isfrozen = True
 
