@@ -34,7 +34,6 @@ class PlantOptions(ModelOptions2d):
         self._isfrozen = False
         self.tracer_element_family = 'cg'
         self.test_function = None
-        self.Q_2d = None
         if self.discrete_pipes:
             raise NotImplementedError  # TODO
         self.update(kwargs)
