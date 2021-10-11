@@ -25,7 +25,16 @@ class ErrorEstimator(object):
         :kwarg boundary: should boundary contributions be considered?
         """
         self.options = options
-        self.mesh = mesh or options.mesh2d
+        if mesh is not None:
+            self.mesh = mesh
+        elif hasattr(options, 'mesh2d'):
+            self.mesh = options.mesh2d
+        elif hasattr(options, 'mesh3d'):
+            self.mesh = options.mesh3d
+        else:
+            raise ValueError("Mesh not provided!")
+        self.dim = self.mesh.topological_dimension()
+        self.name = f'tracer_{self.dim}d'
         self.P0 = FunctionSpace(self.mesh, "DG", 0)
         self.p0test = TestFunction(self.P0)
         self.p0trial = TrialFunction(self.P0)
@@ -58,7 +67,7 @@ class ErrorEstimator(object):
 
     def _replace_supg(self, f):
         if self.options.use_supg_tracer:
-            return replace(self.options.test_function, {TestFunction(self.options.Q_2d): f})
+            return replace(self.options.test_function, {TestFunction(self.options.Q): f})
         else:
             return f
 
@@ -69,10 +78,10 @@ class ErrorEstimator(object):
         :arg uv: velocity field
         :arg c: tracer concentration
         """
-        D = self.options.tracer['tracer_2d'].diffusivity
+        D = self.options.tracer[self.name].diffusivity
         adv = inner(uv, grad(c))
         diff = div(D*grad(c))
-        S = self.options.tracer['tracer_2d'].source
+        S = self.options.tracer[self.name].source
         return adv - diff - S
 
     def _potential_steady(self, uv, c):
@@ -82,7 +91,7 @@ class ErrorEstimator(object):
         :arg uv: velocity field
         :arg c: tracer concentration
         """
-        D = self.options.tracer['tracer_2d'].diffusivity
+        D = self.options.tracer[self.name].diffusivity
         return uv*c - D*grad(c)
 
     def _bnd_potential_steady(self, uv, c):
@@ -93,8 +102,8 @@ class ErrorEstimator(object):
         :arg uv: velocity field
         :arg c: tracer concentration
         """
-        D = self.options.tracer['tracer_2d'].diffusivity
-        bnd_terms = {}
+        D = self.options.tracer[self.name].diffusivity
+        bnd_terms = {'interior': -D*c}
         if self.boundary:
             bnd_conditions = self.options.bnd_conditions
             for bnd_marker in bnd_conditions:
@@ -118,7 +127,7 @@ class ErrorEstimator(object):
         Source term for the steady advection-diffusion equation.
         """
         # TODO: this won't work for time-dependent problems
-        return self.options.tracer['tracer_2d'].source
+        return self.options.tracer[self.name].source
 
     def _restrict(self, v):
         """
@@ -153,7 +162,7 @@ class ErrorEstimator(object):
         else:
             raise Exception(f'Expected two or four arguments, got {len(args)}.')
         # TODO: tracer_advective_velocity_factor?
-        D = self.options.tracer['tracer_2d'].diffusivity
+        D = self.options.tracer[self.name].diffusivity
         psi = Function(self.P0)
         ibp_terms = self._restrict(inner(D*grad(c), self.n))*dS
         flux_terms = 0
@@ -448,7 +457,7 @@ class ErrorEstimator(object):
             # Adjust target complexity
             target = kwargs.get('target_complexity')
             p = kwargs.get('norm_order')
-            C = volume_and_surface_contributions(Hint, Hbar, target, p)
+            C = determine_metric_complexity(Hint, Hbar, target, p)
 
             # Normalise the two metrics
             space_normalise(Hint, target, p, global_factor=C, boundary=False)

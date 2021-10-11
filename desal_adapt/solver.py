@@ -46,7 +46,7 @@ class PlantSolver2d(FlowSolver2d):
     def create_function_spaces(self):
         super(PlantSolver2d, self).create_function_spaces()
         self.options._isfrozen = False
-        self.options.Q_2d = self.function_spaces.Q_2d
+        self.options.Q = self.function_spaces.Q_2d
         self.options._isfrozen = True
 
     def create_equations(self):
@@ -78,6 +78,7 @@ class PlantSolver3d(PlantSolver2d):
         self.callbacks = CallbackManager()
         self.fields = FieldDict()
         self._field_preproc_funcs = {}
+        self.fields.bathymetry_2d = Constant(1.0)  # TODO: avoid this hack
         self.function_spaces = AttrDict()
 
         self.export_initial_state = True
@@ -94,7 +95,21 @@ class PlantSolver3d(PlantSolver2d):
         """
         Computes number of elements, nodes etc and prints to sdtout
         """
-        pass  # TODO
+        nnodes = self.function_spaces.P1_3d.dim()
+        P1DG_3d = self.function_spaces.P1DG_3d
+        nelem3d = int(P1DG_3d.dim()/P1DG_3d.ufl_cell().num_vertices())
+        dofs_u3d = self.function_spaces.U_3d.dim()
+        dofs_tracer3d = self.function_spaces.Q_3d.dim()
+        dofs_tracer3d_core = int(dofs_tracer3d/self.comm.size)
+
+        if not self.options.tracer_only:
+            raise NotImplementedError  # TODO
+        print_output(f'Tracer element family: {self.options.tracer_element_family}, degree: 1')
+        print_output(f'3D cell type: {self.mesh3d.ufl_cell()}')
+        print_output(f'3D mesh: {nnodes} vertices, {nelem3d} elements')
+        print_output(f'Number of 3D tracer DOFs: {dofs_tracer3d}')
+        print_output(f'Number of cores: {self.comm.size}')
+        print_output(f'Tracer DOFs per core: ~{dofs_tracer3d_core:.1f}')
 
     def create_function_spaces(self):
         """
@@ -127,7 +142,7 @@ class PlantSolver3d(PlantSolver2d):
         else:
             raise Exception('Unsupported finite element family {:}'.format(self.options.tracer_element_family))
         self.options._isfrozen = False
-        self.options.Q_3d = self.function_spaces.Q_3d
+        self.options.Q = self.function_spaces.Q_3d
         self.options._isfrozen = True
 
         self._isfrozen = True
@@ -167,6 +182,7 @@ class PlantSolver3d(PlantSolver2d):
                 self.tracer_limiter = limiter.VertexBasedP1DGLimiter(self.function_spaces.Q_3d)
             else:
                 self.tracer_limiter = None
+        self.options.test_function = self.equations.tracer_3d.test
 
         self._isfrozen = True
 
