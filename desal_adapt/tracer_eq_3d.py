@@ -1,6 +1,7 @@
 from __future__ import absolute_import
 from thetis.utility import *
 from thetis.tracer_eq_2d import *
+from desal_adapt.utility import anisotropic_cell_size_3d
 
 
 __all__ = [
@@ -124,6 +125,32 @@ class TracerEquation3D(TracerEquation2D):
     """
     Tracer equation for 3D problems
     """
+    def __init__(self, function_space, depth, options, velocity):
+        """
+        :arg function_space: :class:`FunctionSpace` where the solution belongs
+        :arg depth: :class: `DepthExpression` containing depth info
+        :arg options: :class`PlantOptions` containing parameters
+        :arg velocity: velocity field associated with the shallow water model
+        """
+        super(TracerEquation3D, self).__init__(function_space)
+
+        # Apply SUPG stabilisation
+        kwargs = {}
+        if options.use_supg_tracer:
+            unorm = options.horizontal_velocity_scale
+            if unorm.values()[0] > 0:
+                cellsize = anisotropic_cell_size_3d(function_space.mesh())
+                tau = 0.5*cellsize/unorm
+                D = options.horizontal_diffusivity_scale
+                if D.values()[0] > 0:
+                    Pe = 0.5*unorm*cellsize/D
+                    tau = min_value(tau, Pe/3)
+                self.test = self.test + tau*dot(velocity, grad(self.test))
+                kwargs['test_function'] = self.test
+
+        args = (function_space, depth, options)
+        self.add_terms(*args, **kwargs)
+
     def add_terms(self, *args, **kwargs):
         self.add_term(HorizontalAdvectionTerm(*args, **kwargs), 'explicit')
         self.add_term(HorizontalDiffusionTerm(*args, **kwargs), 'explicit')
