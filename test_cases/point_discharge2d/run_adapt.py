@@ -77,7 +77,7 @@ for i in range(maxiter):
     try:
         solver_obj.iterate()
     except firedrake.ConvergenceError:
-        print_output(f'Failed to converge with iterative solver parameters, trying direct.')
+        print_output('Failed to converge with iterative solver parameters, trying direct.')
         options.tracer_timestepper_options.solver_parameters['pc_type'] = 'lu'
         solver_obj.iterate()
     tracer_2d = solver_obj.fields.tracer_2d
@@ -97,7 +97,7 @@ for i in range(maxiter):
         try:
             compute_gradient(qoi, Control(options.tracer['tracer_2d'].diffusivity))
         except firedrake.ConvergenceError:
-            print_output(f'Failed to converge with iterative solver parameters, trying direct.')
+            print_output('Failed to converge with iterative solver parameters, trying direct.')
             solve_blocks[-1].adj_kwargs['solver_parameters']['pc_type'] = 'lu'
             compute_gradient(qoi, Control(options.tracer['tracer_2d'].diffusivity))
         adjoint_tracer_2d = solve_blocks[-1].adj_sol
