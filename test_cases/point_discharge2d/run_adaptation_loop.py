@@ -12,8 +12,8 @@ parser.add_argument('configuration', 'aligned', help="""
     Choose from 'aligned' and 'offset'.
     """)
 parser.add_argument('approach', 'hessian')
-parser.add_argument('-num_refinements', 4, help="""
-    Number of mesh refinements to consider (default 4).
+parser.add_argument('-num_refinements', 5, help="""
+    Number of mesh refinements to consider (default 5).
     """)
 parser.add_argument('-family', 'cg')
 parser.add_argument('-norm_order', 1.0)
@@ -63,7 +63,7 @@ for level in range(num_refinements + 1):
     msg = f'Refinement {level}/{num_refinements} ({approach}, {config})'
     print_output('\n'.join(['\n', '*'*len(msg), msg, '*'*len(msg)]))
     cpu_timestamp = perf_counter()
-    target = 1000.0*4.0**level
+    target = 250.0*4.0**level
 
     # Adapt until mesh convergence is achieved
     mesh = None
