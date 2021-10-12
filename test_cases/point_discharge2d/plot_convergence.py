@@ -67,6 +67,7 @@ for data, label, marker in zip(runs, labels, markers):
     axes.loglog(data['dofs'], data['error'], '--', marker=marker, label=label)
 axes.set_xlabel('DoF count')
 axes.set_ylabel(r'Relative QoI error (\%)')
+axes.set_yticks([0.01, 0.1, 1, 10, 100])
 axes.grid(True)
 plt.tight_layout()
 plt.savefig(os.path.join(plot_dir, 'dofs_vs_qoi_error.jpg'), dpi=dpi)
@@ -74,12 +75,21 @@ fig, axes = plt.subplots()
 axes.semilogx(uniform['dofs'][:-1], uniform['error'], '--', marker='x', label='Uniform')
 for data, label, marker in zip(runs, labels, markers):
     axes.semilogx(data['dofs'], data['error'], '--', marker=marker, label=label)
-axes.set_yticks(np.linspace(0, 100, 11))
 axes.set_xlabel('DoF count')
 axes.set_ylabel(r'Relative QoI error (\%)')
+axes.set_yticks(np.linspace(0, 100, 11))
+axes.set_ylim([-1, 100])
 axes.grid(True)
 plt.tight_layout()
 plt.savefig(os.path.join(plot_dir, 'dofs_vs_qoi_error_semilogx.jpg'), dpi=dpi)
+
+# Plot legend
+fig2, axes2 = plt.subplots()
+legend = axes2.legend(*axes.get_legend_handles_labels(), fontsize=18, frameon=False, ncol=3)
+fig2.canvas.draw()
+axes2.set_axis_off()
+bbox = legend.get_window_extent().transformed(fig2.dpi_scale_trans.inverted())
+plt.savefig(os.path.join(plot_dir, 'legend.jpg'), bbox_inches=bbox, dpi=dpi)
 
 # Plot QoI error convergence vs wallclock
 fig, axes = plt.subplots()
@@ -90,14 +100,7 @@ for i, (data, label, marker) in enumerate(zip(runs, labels, markers)):
         axes.annotate(it, (wc, err), color=f'C{i+1}')
 axes.set_xlabel(r'CPU time [$\mathrm s$]')
 axes.set_ylabel(r'Relative QoI error (\%)')
+axes.set_yticks([0.01, 0.1, 1, 10, 100])
 axes.grid(True)
 plt.tight_layout()
 plt.savefig(os.path.join(plot_dir, 'time_vs_qoi_error.jpg'))
-
-# Plot legend
-fig2, axes2 = plt.subplots()
-legend = axes2.legend(*axes.get_legend_handles_labels(), fontsize=18, frameon=False)
-fig2.canvas.draw()
-axes2.set_axis_off()
-bbox = legend.get_window_extent().transformed(fig2.dpi_scale_trans.inverted())
-plt.savefig(os.path.join(plot_dir, 'legend.jpg'), bbox_inches=bbox, dpi=dpi)
