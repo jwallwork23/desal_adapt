@@ -21,6 +21,8 @@ parsed_args = parser.parse_args()
 config = parsed_args.configuration
 num_refinements = parsed_args.num_refinements
 assert num_refinements >= 1
+num_repetitions = parsed_args.num_repetitions
+assert num_repetitions >= 1
 family = parsed_args.family
 cwd = os.path.join(os.path.dirname(__file__))
 output_dir = create_directory(os.path.join(cwd, 'outputs', config, 'fixed_mesh', f'{family}1'))
@@ -31,7 +33,7 @@ for level in range(num_refinements + 1):
     cpu_times = []
     for rep in range(num_repetitions):
         msg = f'Refinement {level}/{num_refinements}, repetition {rep+1}/{num_repetitions}' \
-              + f '(fixed_mesh, {config})'
+              + f' (fixed_mesh, {config})'
         print_output('\n'.join(['\n', '*'*len(msg), msg, '*'*len(msg)]))
         cpu_timestamp = perf_counter()
 

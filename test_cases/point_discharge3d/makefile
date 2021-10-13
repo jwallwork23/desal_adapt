@@ -22,28 +22,28 @@ snapshot_weighted_gradient:
 	@python3 run_adapt.py offset weighted_gradient
 
 uniform:
-	@python3 run_uniform_convergence.py aligned
-	@python3 run_uniform_convergence.py offset
+	@python3 run_uniform_convergence.py aligned -num_repetitions 5
+	@python3 run_uniform_convergence.py offset -num_repetitions 5
 
 hessian:
-	@python3 run_adaptation_loop.py aligned hessian
-	@python3 run_adaptation_loop.py offset hessian
+	@python3 run_adaptation_loop.py aligned hessian -num_repetitions 5
+	@python3 run_adaptation_loop.py offset hessian -num_repetitions 5
 
 isotropic_dwr:
-	@python3 run_adaptation_loop.py aligned isotropic_dwr
-	@python3 run_adaptation_loop.py offset isotropic_dwr
+	@python3 run_adaptation_loop.py aligned isotropic_dwr -num_repetitions 5
+	@python3 run_adaptation_loop.py offset isotropic_dwr -num_repetitions 5
 
 anisotropic_dwr:
-	@python3 run_adaptation_loop.py aligned anisotropic_dwr
-	@python3 run_adaptation_loop.py offset anisotropic_dwr
+	@python3 run_adaptation_loop.py aligned anisotropic_dwr -num_repetitions 5
+	@python3 run_adaptation_loop.py offset anisotropic_dwr -num_repetitions 5
 
 weighted_hessian:
-	@python3 run_adaptation_loop.py aligned weighted_hessian
-	@python3 run_adaptation_loop.py offset weighted_hessian
+	@python3 run_adaptation_loop.py aligned weighted_hessian -num_repetitions 5
+	@python3 run_adaptation_loop.py offset weighted_hessian -num_repetitions 5
 
 weighted_gradient:
-	@python3 run_adaptation_loop.py aligned weighted_gradient
-	@python3 run_adaptation_loop.py offset weighted_gradient
+	@python3 run_adaptation_loop.py aligned weighted_gradient -num_repetitions 5
+	@python3 run_adaptation_loop.py offset weighted_gradient -num_repetitions 5
 
 plot:
 	@python3 plot_convergence.py aligned
