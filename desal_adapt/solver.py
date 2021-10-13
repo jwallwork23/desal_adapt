@@ -13,15 +13,17 @@ class PlantSolver2d(FlowSolver2d):
     Modified solver which accepts :class:`ModelOptions2d` objects
     with more attributes than expected.
     """
-    def __init__(self, options, mesh=None):
+    def __init__(self, options, mesh=None, optimise=False):
         """
         :arg options: :class:`PlantOptions` parameter object
         :kwarg mesh: :class:`MeshGeometry` upon which to solve
+        :kwarg optimise: is this a timed run?
         """
         self._initialized = False
         self.options = options
         self.mesh2d = mesh or options.mesh2d
         self.comm = self.mesh2d.comm
+        self.optimise = optimise
 
         self.dt = options.timestep
         self.simulation_time = 0
@@ -57,21 +59,22 @@ class PlantSolver2d(FlowSolver2d):
         """
         Computes number of elements, nodes etc and prints to sdtout
         """
-        from pyroteus.mesh_quality import get_aspect_ratios2d
-
         nnodes = self.function_spaces.P1_2d.dim()
         P1DG_2d = self.function_spaces.P1DG_2d
         nelem2d = int(P1DG_2d.dim()/P1DG_2d.ufl_cell().num_vertices())
-        dofs_u2d = self.function_spaces.U_2d.dim()
+        # dofs_u2d = self.function_spaces.U_2d.dim()
         dofs_tracer2d = self.function_spaces.Q_2d.dim()
         dofs_tracer2d_core = int(dofs_tracer2d/self.comm.size)
-        ar = get_aspect_ratios2d(self.mesh2d).vector().gather().max()
 
         if not self.options.tracer_only:
             raise NotImplementedError  # TODO
         print_output(f'Tracer element family: {self.options.tracer_element_family}, degree: 1')
         print_output(f'2D cell type: {self.mesh2d.ufl_cell()}')
-        print_output(f'2D mesh: {nnodes} vertices, {nelem2d} elements, aspect ratio {ar:.1f}')
+        msg = f'2D mesh: {nnodes} vertices, {nelem2d} elements'
+        if not self.optimise:
+            from pyroteus.mesh_quality import get_aspect_ratios2d
+            msg += f', aspect ratio {get_aspect_ratios2d(self.mesh2d).vector().gather().max():.1f}'
+        print_output(msg)
         print_output(f'Number of 2D tracer DOFs: {dofs_tracer2d}')
         print_output(f'Number of cores: {self.comm.size}')
         print_output(f'Tracer DOFs per core: ~{dofs_tracer2d_core:.1f}')
@@ -82,15 +85,17 @@ class PlantSolver3d(PlantSolver2d):
     Modified solver which accepts :class:`ModelOptions2d` objects
     with more attributes than expected.
     """
-    def __init__(self, options, mesh=None):
+    def __init__(self, options, mesh=None, optimise=False):
         """
         :arg options: :class:`PlantOptions` parameter object
         :kwarg mesh: :class:`MeshGeometry` upon which to solve
+        :kwarg optimise: is this a timed run?
         """
         self._initialized = False
         self.options = options
         self.mesh3d = mesh or options.mesh3d
         self.comm = self.mesh3d.comm
+        self.optimise = optimise
 
         self.dt = options.timestep
         self.simulation_time = 0
@@ -118,21 +123,22 @@ class PlantSolver3d(PlantSolver2d):
         """
         Computes number of elements, nodes etc and prints to sdtout
         """
-        from pyroteus.mesh_quality import get_aspect_ratios3d
-
         nnodes = self.function_spaces.P1_3d.dim()
         P1DG_3d = self.function_spaces.P1DG_3d
         nelem3d = int(P1DG_3d.dim()/P1DG_3d.ufl_cell().num_vertices())
-        dofs_u3d = self.function_spaces.U_3d.dim()
+        # dofs_u3d = self.function_spaces.U_3d.dim()
         dofs_tracer3d = self.function_spaces.Q_3d.dim()
         dofs_tracer3d_core = int(dofs_tracer3d/self.comm.size)
-        ar = get_aspect_ratios3d(self.mesh3d).vector().gather().max()
 
         if not self.options.tracer_only:
             raise NotImplementedError  # TODO
         print_output(f'Tracer element family: {self.options.tracer_element_family}, degree: 1')
         print_output(f'3D cell type: {self.mesh3d.ufl_cell()}')
-        print_output(f'3D mesh: {nnodes} vertices, {nelem3d} elements, aspect ratio {ar:.1f}')
+        msg = f'3D mesh: {nnodes} vertices, {nelem3d} elements'
+        if not self.optimise:
+            from pyroteus.mesh_quality import get_aspect_ratios3d
+            msg += f', aspect ratio {get_aspect_ratios3d(self.mesh3d).vector().gather().max():.1f}'
+        print_output(msg)
         print_output(f'Number of 3D tracer DOFs: {dofs_tracer3d}')
         print_output(f'Number of cores: {self.comm.size}')
         print_output(f'Tracer DOFs per core: ~{dofs_tracer3d_core:.1f}')
@@ -150,7 +156,7 @@ class PlantSolver3d(PlantSolver2d):
         self.function_spaces.P1_3d = FunctionSpace(self.mesh3d, 'CG', 1, name='P1_3d')
         self.function_spaces.P1v_3d = VectorFunctionSpace(self.mesh3d, 'CG', 1, name='P1v_3d')
         self.function_spaces.P1DG_3d = FunctionSpace(self.mesh3d, DG, 1, name='P1DG_3d')
-        self.function_spaces.P1DGv_3d = VectorFunctionSpace(self.mesh3d, DG, 1, name='P1DGv_3d')
+        # self.function_spaces.P1DGv_3d = VectorFunctionSpace(self.mesh3d, DG, 1, name='P1DGv_3d')
 
         # Velocity space
         if self.options.element_family == 'dg-cg':
@@ -198,7 +204,7 @@ class PlantSolver3d(PlantSolver2d):
                                shortname=tracer.metadata['shortname'],
                                unit=tracer.metadata['unit'])
             if tracer.use_conservative_form:
-                raise NotImplementedError # TODO
+                raise NotImplementedError  # TODO
             else:
                 self.equations[label] = tracer_eq_3d.TracerEquation3D(
                     self.function_spaces.Q_3d, self.depth, self.options, self.fields.uv_3d)

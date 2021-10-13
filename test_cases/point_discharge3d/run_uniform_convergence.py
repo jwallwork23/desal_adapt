@@ -42,7 +42,7 @@ for level in range(num_refinements + 1):
         options.output_directory = output_dir
 
         # Setup solver
-        solver_obj = PlantSolver3d(options)
+        solver_obj = PlantSolver3d(options, optimise=True)
         options.apply_boundary_conditions(solver_obj)
         options.apply_initial_conditions(solver_obj)
         solver_obj.iterate()
