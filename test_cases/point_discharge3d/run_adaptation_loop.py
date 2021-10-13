@@ -12,8 +12,8 @@ parser.add_argument('configuration', 'aligned', help="""
     Choose from 'aligned' and 'offset'.
     """)
 parser.add_argument('approach', 'hessian')
-parser.add_argument('-num_refinements', 2, help="""
-    Number of mesh refinements to consider (default 4).
+parser.add_argument('-num_refinements', 3, help="""
+    Number of mesh refinements to consider (default 3).
     """)
 parser.add_argument('-num_repetitions', 1, help="""
     Number of times to repeat the simulation (default 1).
@@ -28,7 +28,7 @@ parser.add_argument('-maxiter', 35)
 parser.add_argument('-element_rtol', 0.005)
 parser.add_argument('-qoi_rtol', 0.005)
 parser.add_argument('-h_min', 1.0e-10)
-parser.add_argument('-h_max', 1.0e+02)
+parser.add_argument('-h_max', 1.0e+01)
 parser.add_argument('-a_max', 1.0e+05)
 parser.add_argument('-flux_form', False)
 parsed_args = parser.parse_args()
@@ -67,9 +67,12 @@ tape = get_working_tape()
 if approach == 'hessian':
     stop_annotating()
 for level in range(num_refinements + 1):
-    target = 125.0*8.0**level
+    target = 400.0*4.0**level
     cpu_times = []
+    converged_reason = None
     for rep in range(num_repetitions):
+        if converged_reason == 'diverged':
+            continue
         msg = f'Refinement {level}/{num_refinements}, repetition {rep+1}/{num_repetitions}' \
               + f' ({approach}, {config})'
         print_output('\n'.join(['\n', '*'*len(msg), msg, '*'*len(msg)]))
@@ -79,6 +82,7 @@ for level in range(num_refinements + 1):
         mesh = None
         qoi_old = None
         elements_old = None
+        converged_reason = None
         for i in range(maxiter):
             tape.clear_tape()
 
@@ -105,6 +109,7 @@ for level in range(num_refinements + 1):
             if qoi_old is not None and i > miniter:
                 if np.abs(qoi - qoi_old) < qoi_rtol*np.abs(qoi_old):
                     print_output(f'Converged after {i+1} iterations due to QoI convergence.')
+                    converged_reason = 'QoI'
                     break
 
             # Construct metric
@@ -137,11 +142,14 @@ for level in range(num_refinements + 1):
             if elements_old is not None and i > miniter:
                 if np.abs(elements - elements_old) < element_rtol*elements_old:
                     print_output(f"Converged after {i+1} iterations due to element count convergence.")
+                    converged_reason = 'element'
                     break
             elements_old = elements
             qoi_old = qoi
-            if i + 1 == maxiter:
-                raise ConvergenceError(f"Failed to converge after {maxiter} iterations.")
+        if converged_reason is None:
+            converged_reason = 'diverged'
+            print_output(f"Failed to converge after {maxiter} iterations.")
+            continue
         cpu_times.append(perf_counter() - cpu_timestamp)
 
     # Logging
