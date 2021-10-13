@@ -41,12 +41,7 @@ class PointDischarge2dOptions(PlantOptions):
         self.mesh2d = mesh
         if self.mesh2d is None:
             self.mesh2d = RectangleMesh(100*2**level, 20*2**level, self.domain_length, self.domain_width)
-        P0_2d = get_functionspace(self.mesh2d, "DG", 0)
-        P1_2d = get_functionspace(self.mesh2d, "CG", 1)
-        self.mesh2d.delta_x = interpolate(CellSize(self.mesh2d), P0_2d)
-        boundary_markers = sorted(self.mesh2d.exterior_facets.unique_markers)
-        one = Function(P1_2d).assign(1.0)
-        self.mesh2d.boundary_len = OrderedDict({i: assemble(one*ds(int(i))) for i in boundary_markers})
+        self.setup_mesh(self.mesh2d)
 
         # Physics
         self.tracer_only = True

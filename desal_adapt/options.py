@@ -1,5 +1,6 @@
-from thetis.options import ModelOptions2d
 from thetis.configuration import PositiveFloat, Bool
+from thetis.options import ModelOptions2d
+from thetis.utility import *
 
 
 __all__ = ["PlantOptions"]
@@ -38,8 +39,16 @@ class PlantOptions(ModelOptions2d):
             raise NotImplementedError  # TODO
         self.update(kwargs)
 
-    def get_update_forcings(self):
-        return lambda t: None
+    def setup_mesh(self, mesh):
+        """
+        Endow a mesh with cell size and boundary length data.
+        """
+        P0 = get_functionspace(mesh, "DG", 0)
+        P1 = get_functionspace(mesh, "CG", 1)
+        mesh.delta_x = interpolate(CellSize(mesh), P0)
+        boundary_markers = sorted(mesh.exterior_facets.unique_markers)
+        one = Function(P1).assign(1.0)
+        mesh.boundary_len = OrderedDict({i: assemble(one*ds(int(i))) for i in boundary_markers})
 
     def get_update_forcings(self, solver_obj):
         return lambda t: None
@@ -79,5 +88,8 @@ class PlantOptions(ModelOptions2d):
         scale and minimum element spacing.
         """
         u = self.horizontal_velocity_scale
-        delta_x = self.mesh2d.delta_x.vector().gather().min()
+        try:
+            delta_x = self.mesh2d.delta_x.vector().gather().min()
+        except AttributeError:
+            delta_x = self.mesh3d.delta_x.vector().gather().min()
         return u*self.timestep/delta_x

@@ -52,12 +52,7 @@ class PointDischarge3dOptions(PlantOptions):
         self.mesh3d = mesh
         if self.mesh3d is None:
             self.mesh3d = BoxMesh(100*2**level, 20*2**level, 20*2**level, self.domain_length, self.domain_width, self.domain_width)
-        P0_3d = FunctionSpace(self.mesh3d, "DG", 0)
-        P1_3d = FunctionSpace(self.mesh3d, "CG", 1)
-        self.mesh3d.delta_x = interpolate(CellSize(self.mesh3d), P0_3d)
-        boundary_markers = sorted(self.mesh3d.exterior_facets.unique_markers)
-        one = Function(P1_3d).assign(1.0)
-        self.mesh3d.boundary_len = OrderedDict({i: assemble(one*ds(int(i))) for i in boundary_markers})
+        self.setup_mesh(self.mesh3d)
 
         # Physics
         self.tracer_only = True
