@@ -10,12 +10,12 @@ snapshot_isotropic_dwr:
 	@python3 run_adapt.py offset isotropic_dwr
 
 snapshot_anisotropic_dwr:
-	@python3 run_adapt.py aligned anisotropic_dwr
-	@python3 run_adapt.py offset anisotropic_dwr
+	@python3 run_adapt.py aligned anisotropic_dwr -target 8000
+	@python3 run_adapt.py offset anisotropic_dwr -target 8000
 
 snapshot_weighted_hessian:
-	@python3 run_adapt.py aligned weighted_hessian
-	@python3 run_adapt.py offset weighted_hessian
+	@python3 run_adapt.py aligned weighted_hessian -target 3000
+	@python3 run_adapt.py offset weighted_hessian -target 3000
 
 snapshot_weighted_gradient:
 	@python3 run_adapt.py aligned weighted_gradient
