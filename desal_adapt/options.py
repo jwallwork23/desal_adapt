@@ -43,8 +43,8 @@ class PlantOptions(ModelOptions2d):
         """
         Endow a mesh with cell size and boundary length data.
         """
-        P0 = get_functionspace(mesh, "DG", 0)
-        P1 = get_functionspace(mesh, "CG", 1)
+        P0 = FunctionSpace(mesh, "DG", 0)
+        P1 = FunctionSpace(mesh, "CG", 1)
         mesh.delta_x = interpolate(CellSize(mesh), P0)
         boundary_markers = sorted(mesh.exterior_facets.unique_markers)
         one = Function(P1).assign(1.0)

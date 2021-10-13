@@ -53,6 +53,29 @@ class PlantSolver2d(FlowSolver2d):
         super(PlantSolver2d, self).create_equations()
         self.options.test_function = self.equations.tracer_2d.test
 
+    def compute_mesh_stats(self):
+        """
+        Computes number of elements, nodes etc and prints to sdtout
+        """
+        from pyroteus.mesh_quality import get_aspect_ratios2d
+
+        nnodes = self.function_spaces.P1_2d.dim()
+        P1DG_2d = self.function_spaces.P1DG_2d
+        nelem2d = int(P1DG_2d.dim()/P1DG_2d.ufl_cell().num_vertices())
+        dofs_u2d = self.function_spaces.U_2d.dim()
+        dofs_tracer2d = self.function_spaces.Q_2d.dim()
+        dofs_tracer2d_core = int(dofs_tracer2d/self.comm.size)
+        ar = get_aspect_ratios2d(self.mesh2d).vector().gather().max()
+
+        if not self.options.tracer_only:
+            raise NotImplementedError  # TODO
+        print_output(f'Tracer element family: {self.options.tracer_element_family}, degree: 1')
+        print_output(f'2D cell type: {self.mesh2d.ufl_cell()}')
+        print_output(f'2D mesh: {nnodes} vertices, {nelem2d} elements, aspect ratio {ar:.1f}')
+        print_output(f'Number of 2D tracer DOFs: {dofs_tracer2d}')
+        print_output(f'Number of cores: {self.comm.size}')
+        print_output(f'Tracer DOFs per core: ~{dofs_tracer2d_core:.1f}')
+
 
 class PlantSolver3d(PlantSolver2d):
     """
@@ -95,18 +118,21 @@ class PlantSolver3d(PlantSolver2d):
         """
         Computes number of elements, nodes etc and prints to sdtout
         """
+        from pyroteus.mesh_quality import get_aspect_ratios3d
+
         nnodes = self.function_spaces.P1_3d.dim()
         P1DG_3d = self.function_spaces.P1DG_3d
         nelem3d = int(P1DG_3d.dim()/P1DG_3d.ufl_cell().num_vertices())
         dofs_u3d = self.function_spaces.U_3d.dim()
         dofs_tracer3d = self.function_spaces.Q_3d.dim()
         dofs_tracer3d_core = int(dofs_tracer3d/self.comm.size)
+        ar = get_aspect_ratios3d(self.mesh3d).vector().gather().max()
 
         if not self.options.tracer_only:
             raise NotImplementedError  # TODO
         print_output(f'Tracer element family: {self.options.tracer_element_family}, degree: 1')
         print_output(f'3D cell type: {self.mesh3d.ufl_cell()}')
-        print_output(f'3D mesh: {nnodes} vertices, {nelem3d} elements')
+        print_output(f'3D mesh: {nnodes} vertices, {nelem3d} elements, aspect ratio {ar:.1f}')
         print_output(f'Number of 3D tracer DOFs: {dofs_tracer3d}')
         print_output(f'Number of cores: {self.comm.size}')
         print_output(f'Tracer DOFs per core: ~{dofs_tracer3d_core:.1f}')

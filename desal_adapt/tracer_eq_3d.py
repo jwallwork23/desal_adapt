@@ -1,6 +1,7 @@
 from __future__ import absolute_import
-from thetis.utility import *
+from thetis.equation import Equation
 from thetis.tracer_eq_2d import *
+from thetis.utility import *
 from desal_adapt.utility import anisotropic_cell_size_3d
 
 
@@ -121,7 +122,7 @@ class HorizontalDiffusionTerm(TracerTerm):
         return -f
 
 
-class TracerEquation3D(TracerEquation2D):
+class TracerEquation3D(Equation):
     """
     Tracer equation for 3D problems
     """
