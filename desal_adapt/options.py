@@ -41,16 +41,11 @@ class PlantOptions(ModelOptions2d):
     def get_update_forcings(self):
         return lambda t: None
 
-    @property
-    def update_forcings(self):
-        return self.get_update_forcings()
+    def get_update_forcings(self, solver_obj):
+        return lambda t: None
 
-    def get_export_func(self):
+    def get_export_func(self, solver_obj):
         return lambda: None
-
-    @property
-    def export_func(self):
-        return self.get_export_func()
 
     def get_bnd_conditions(self, V_2d):
         self.bnd_conditions = {}

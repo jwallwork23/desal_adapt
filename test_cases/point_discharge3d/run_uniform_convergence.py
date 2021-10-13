@@ -45,7 +45,7 @@ for level in range(num_refinements + 1):
         solver_obj = PlantSolver3d(options)
         options.apply_boundary_conditions(solver_obj)
         options.apply_initial_conditions(solver_obj)
-        solver_obj.iterate(update_forcings=options.update_forcings, export_func=options.export_func)
+        solver_obj.iterate()
         cpu_times.append(perf_counter() - cpu_timestamp)
 
     # Logging

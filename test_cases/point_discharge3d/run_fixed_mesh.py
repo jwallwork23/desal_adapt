@@ -27,6 +27,6 @@ options.apply_boundary_conditions(solver_obj)
 options.apply_initial_conditions(solver_obj)
 
 # Solve
-solver_obj.iterate(update_forcings=options.update_forcings, export_func=options.export_func)
+solver_obj.iterate()
 output_dir = create_directory(os.path.join(output_dir, 'Tracer3d'))
 File(os.path.join(output_dir, 'tracer_3d.pvd')).write(solver_obj.fields.tracer_3d)
