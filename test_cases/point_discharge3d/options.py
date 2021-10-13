@@ -177,7 +177,7 @@ class PointDischarge3dOptions(PlantOptions):
         D = self.horizontal_diffusivity_scale
         Pe = 0.5*u/D
         q = 1.0
-        rr = max_value(sqrt((x - x0)**2 + (y - y0)**2), r)
+        rr = max_value(sqrt((x - x0)**2 + (y - y0)**2 + (z - z0)**2), r)
         solution = q/(8*pi*pi*D*rr)*exp(Pe*(x - x0))*exp(-Pe*rr)
         dx_qoi = dx(degree=quadrature_degree)
         return assemble(self.qoi_kernel*solution*dx_qoi)
