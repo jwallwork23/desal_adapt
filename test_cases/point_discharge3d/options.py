@@ -51,7 +51,7 @@ class PointDischarge3dOptions(PlantOptions):
         # Setup mesh
         self.mesh3d = mesh
         if self.mesh3d is None:
-            self.mesh3d = BoxMesh(100*2**level, 20*2**level, 20*2**level, self.domain_length, self.domain_width, self.domain_width)
+            self.mesh3d = BoxMesh(50*2**level, 10*2**level, 10*2**level, self.domain_length, self.domain_width, self.domain_width)
         self.setup_mesh(self.mesh3d)
 
         # Physics
@@ -176,3 +176,22 @@ class PointDischarge3dOptions(PlantOptions):
         solution = q/(8*pi*pi*D*rr)*exp(Pe*(x - x0))*exp(-Pe*rr)
         dx_qoi = dx(degree=quadrature_degree)
         return assemble(self.qoi_kernel*solution*dx_qoi)
+
+
+if __name__ == '__main__':
+    from desal_adapt.parse import Parser
+
+    parser = Parser(prog='test_cases/point_discharge3d/options.py')
+    parser.add_argument('configuration', 'aligned', help="""
+        Choose from 'aligned' and 'offset'.
+        """)
+    parser.add_argument('-num_refinements', 3, help="""
+        Number of mesh refinements (default 3).
+        """)
+    parsed_args = parser.parse_args()
+    num_refinements = parsed_args.num_refinements
+    assert num_refinements >= 0
+    for level in range(num_refinements+1):
+        options = PointDischarge3dOptions(level=level, configuration=parsed_args.configuration)
+        dofs = options.mesh2d.num_vertices()
+        print_output(f'DoF count {dofs:7d},   analytical QoI = {options.analytical_qoi():.8e}')
