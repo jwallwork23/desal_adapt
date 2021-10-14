@@ -11,7 +11,7 @@ class AnalyticalForcingsOptions(PlantOptions):
     outfall scenario with analytically prescribed
     tidal forcings.
     """
-    resource_dir = os.path.join(os.path.dirname(__file__), 'resources')
+    resource_dir = create_directory(os.path.join(os.path.dirname(__file__), 'resources'))
     domain_length = PositiveFloat(3000.0).tag(config=False)
     domain_width = PositiveFloat(1000.0).tag(config=False)
     background_salinity = PositiveFloat(39.0).tag(config=True)
@@ -29,7 +29,9 @@ class AnalyticalForcingsOptions(PlantOptions):
         assert family in ('cg', 'dg')
 
         # Setup mesh
-        if mesh is None:
+        if kwargs.get('meshgen', False):
+            return
+        elif mesh is None:
             mesh_file = os.path.join(self.resource_dir, f'channel_{level}.msh')
             if os.path.exists(mesh_file):
                 self.mesh2d = Mesh(mesh_file)

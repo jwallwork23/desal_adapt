@@ -1,6 +1,6 @@
 import argparse
 import os
-from options import AnalyticalForcingOptions
+from options import AnalyticalForcingsOptions
 
 
 # Parse for refinement level
@@ -15,10 +15,10 @@ code = '//' + 80*'*' + f'''
 ''' + '//' + 80*'*' + '\n\n'
 
 # Domain specification
-options = AnalyticalForcingOptions()
+options = AnalyticalForcingsOptions(meshgen=True)
 code += '// Domain specification\n'
-code += 'L = {options.domain_length:.0f};\n'
-code += 'W = {options.domain_width:.0f};\n'
+code += f'L = {options.domain_length:.0f};\n'
+code += f'W = {options.domain_width:.0f};\n'
 code += 'deltax = 1000;\ndeltay = 250;\n'
 code += 'dx = 100;\n'
 dx_refined = [24, 12, 6, 5, 4, 3][level]
@@ -62,5 +62,5 @@ Physical Surface(2) = {2};
 '''
 
 # Write to file
-with open(os.path.join(op.resource_dir, f'channel_{level}.geo'), 'w+') as f:
+with open(os.path.join(options.resource_dir, f'channel_{level}.geo'), 'w+') as f:
     f.write(code)
