@@ -43,15 +43,10 @@ for tag, label in zip(tags, names):
         runs.append(data)
         labels.append(label)
 
-# QoI errors
-truth = uniform['qois'][-1]
-uniform['error'] = 100*np.abs((uniform['qois'][:-1] - truth)/truth)
-for data in runs:
-    data['error'] = 100*np.abs((data['qois'] - truth)/truth)
-
 # Plot QoI convergence vs DoFs
 fig, axes = plt.subplots()
-axes.loglog(uniform['dofs'], uniform['qois'], '--', marker='x', label='Uniform')
+if uniform is not None:
+    axes.loglog(uniform['dofs'], uniform['qois'], '--', marker='x', label='Uniform')
 for data, label, marker in zip(runs, labels, markers):
     axes.loglog(data['dofs'], data['qois'], '--', marker=marker, label=label)
 axes.set_xlabel('DoF count')
@@ -59,6 +54,15 @@ axes.set_ylabel('Quantity of interest')
 axes.grid(True)
 plt.tight_layout()
 plt.savefig(os.path.join(plot_dir, f'dofs_vs_qoi_{config}.jpg'), dpi=dpi)
+if uniform is None:
+    print('Cannot plot errors because fixed mesh benchmarks do not exist yet.')
+    sys.exit(0)
+
+# QoI errors
+truth = uniform['qois'][-1]
+uniform['error'] = 100*np.abs((uniform['qois'][:-1] - truth)/truth)
+for data in runs:
+    data['error'] = 100*np.abs((data['qois'] - truth)/truth)
 
 # Plot QoI error convergence vs DoFs
 fig, axes = plt.subplots()
