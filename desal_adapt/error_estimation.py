@@ -426,7 +426,7 @@ class ErrorEstimator(object):
                 H *= 0.5
 
             # Combine the two
-            return anisotropic_metric([ee], [H], target_space=self.P1_ten, **kwargs)
+            return anisotropic_metric([interpolate(ee, self.P0)], [H], **kwargs)
         elif self.metric_type == 'weighted_gradient':
             F = self.potential(*args[:nargs//2])
             adj = args[nargs//2+1]  # NOTE: Only picks current adjoint solution
