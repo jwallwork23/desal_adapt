@@ -60,7 +60,7 @@ class AnalyticalForcingsOptions(PlantOptions):
         outlet_r = 25.0
         x, y = SpatialCoordinate(self.mesh2d)
         self.source = self.outlet_value*exp(-((x - outlet_x)**2 + (y - outlet_y)**2)/outlet_r**2)
-        self.add_tracer_2d('salinity_2d',
+        self.add_tracer_2d('tracer_2d',
                            'Depth averaged salinity',
                            'Salinity2d',
                            shortname='Salinity',
@@ -86,23 +86,23 @@ class AnalyticalForcingsOptions(PlantOptions):
         self.tracer_timestepper_type = 'CrankNicolson'
         self.timestep = 2.232
         self.simulation_export_time = 5*self.timestep
-        T_tide = 0.05*self.M2_tide_period
-        self.simulation_end_time = 2*T_tide
+        self.tide_time = 0.05*self.M2_tide_period
+        self.simulation_end_time = 2*self.tide_time
 
         # Tidal forcing
         self.tc = Constant(0.0)
-        self.forced_velocity = as_vector([u*sin(2*pi/T_tide*self.tc), 0.0])
+        self.forced_velocity = as_vector([u*sin(2*pi/self.tide_time*self.tc), 0.0])
 
         # Solver parameters
         self.tracer_timestepper_options.solver_parameters.update({
-            'ksp_converged_reason': None,
+            # 'ksp_converged_reason': None,
             'ksp_max_it': 10000,
             'ksp_type': 'gmres',
             'pc_type': 'bjacobi',
         })
 
         # I/O
-        self.fields_to_export = ['salinity_2d']
+        self.fields_to_export = ['tracer_2d']
         self.fields_to_export_hdf5 = []
 
         self._isfrozen = True
@@ -110,7 +110,7 @@ class AnalyticalForcingsOptions(PlantOptions):
     def apply_boundary_conditions(self, solver_obj):
         if len(solver_obj.function_spaces.keys()) == 0:
             solver_obj.create_function_spaces()
-        solver_obj.bnd_functions['salinity'] = self.bnd_conditions
+        solver_obj.bnd_functions['tracer'] = self.bnd_conditions
 
     def apply_initial_conditions(self, solver_obj):
         if len(solver_obj.function_spaces.keys()) == 0:
@@ -118,7 +118,9 @@ class AnalyticalForcingsOptions(PlantOptions):
         self.tc.assign(0.0)
         uv = Function(solver_obj.function_spaces.U_2d)
         uv.interpolate(self.forced_velocity)
-        solver_obj.assign_initial_conditions(uv=uv)
+        tracer = Function(solver_obj.function_spaces.Q_2d)
+        tracer.assign(self.background_salinity)
+        solver_obj.assign_initial_conditions(uv=uv, tracer=tracer)
 
     def get_update_forcings(self, solver_obj):
         """
