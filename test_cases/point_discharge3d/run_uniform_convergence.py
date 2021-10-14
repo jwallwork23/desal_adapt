@@ -16,6 +16,9 @@ parser.add_argument('-num_repetitions', 1, help="""
 
     This is for timing purposes.
     """)
+parser.add_argument('-quadrature_degree', 12, help="""
+    Quadrature degree for QoI evaluation (default 12).
+    """)
 parser.add_argument('-family', 'cg')
 parsed_args = parser.parse_args()
 config = parsed_args.configuration
@@ -24,6 +27,7 @@ assert num_refinements >= 1
 num_repetitions = parsed_args.num_repetitions
 assert num_repetitions >= 1
 family = parsed_args.family
+quad_degree = parsed_args.quadrature_degree
 cwd = os.path.join(os.path.dirname(__file__))
 output_dir = create_directory(os.path.join(cwd, 'outputs', config, 'fixed_mesh', f'{family}1'))
 
@@ -49,7 +53,7 @@ for level in range(num_refinements + 1):
         cpu_times.append(perf_counter() - cpu_timestamp)
 
     # Logging
-    qoi = options.qoi(solver_obj.fields.tracer_3d)
+    qoi = options.qoi(solver_obj.fields.tracer_3d, quadrature_degree=quad_degree)
     dofs = solver_obj.function_spaces.Q_3d.dof_count
     elements = options.mesh3d.num_cells()
     wallclock = np.mean(cpu_times)
