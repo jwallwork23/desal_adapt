@@ -82,24 +82,19 @@ for level in range(num_refinements + 1):
         for i in range(maxiter):
             tape.clear_tape()
 
-            # Set parameters
+            # Setup
             options = PointDischarge2dOptions(configuration=config, family=family, mesh=mesh)
             mesh = options.mesh2d
             options.output_directory = output_dir
             options.fields_to_export = []
-
-            # Create solver
             solver_obj = PlantSolver2d(options, optimise=True)
             options.apply_boundary_conditions(solver_obj)
             options.apply_initial_conditions(solver_obj)
 
-            # Solve
-            try:
-                solver_obj.iterate()
-            except firedrake.ConvergenceError:
-                print_output('Failed to converge with iterative solver parameters, trying direct.')
-                options.tracer_timestepper_options.solver_parameters['pc_type'] = 'lu'
-                solver_obj.iterate()
+            # Forward solve
+            solver_obj.iterate()
+
+            # Check for QoI convergence
             tracer_2d = solver_obj.fields.tracer_2d
             qoi = options.qoi(tracer_2d)
             if qoi_old is not None and i > miniter:
@@ -114,12 +109,7 @@ for level in range(num_refinements + 1):
                 metric = ee.recover_hessian(uv, tracer_2d)
             else:
                 solve_blocks = get_solve_blocks()
-                try:
-                    compute_gradient(qoi, Control(options.tracer['tracer_2d'].diffusivity))
-                except firedrake.ConvergenceError:
-                    print_output('Failed to converge with iterative solver parameters, trying direct.')
-                    solve_blocks[-1].adj_kwargs['solver_parameters']['pc_type'] = 'lu'
-                    compute_gradient(qoi, Control(options.tracer['tracer_2d'].diffusivity))
+                compute_gradient(qoi, Control(options.tracer['tracer_2d'].diffusivity))
                 adjoint_tracer_2d = solve_blocks[-1].adj_sol
                 with stop_annotating():
                     metric = ee.metric(uv, tracer_2d, uv, adjoint_tracer_2d,
@@ -146,9 +136,17 @@ for level in range(num_refinements + 1):
         cpu_times.append(perf_counter() - cpu_timestamp)
 
     # Logging
-    qoi = options.qoi(solver_obj.fields.tracer_2d)
+    if converged_reason == 'element'
+        options = PointDischarge2dOptions(configuration=config, family=family, mesh=mesh)
+        mesh = options.mesh2d
+        options.output_directory = output_dir
+        options.fields_to_export = []
+        solver_obj = PlantSolver2d(options, optimise=True)
+        options.apply_boundary_conditions(solver_obj)
+        options.apply_initial_conditions(solver_obj)
+        solver_obj.iterate()
+        qoi = options.qoi(solver_obj.fields.tracer_2d)
     dofs = solver_obj.function_spaces.Q_2d.dof_count
-    elements = options.mesh2d.num_cells()
     wallclock = np.mean(cpu_times)
     lines += f'{qoi},{dofs},{elements},{wallclock},{i+1}\n'
     with open(os.path.join(output_dir, 'convergence.log'), 'w+') as log:

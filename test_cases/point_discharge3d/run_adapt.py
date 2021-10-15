@@ -67,25 +67,20 @@ for i in range(maxiter):
     msg = f'Iteration {i+1}/{maxiter} ({approach}, {config})'
     print_output('\n'.join(['\n', '*'*len(msg), msg, '*'*len(msg)]))
 
-    # Set parameters
+    # Setup
     options = PointDischarge3dOptions(level=level, family=family, configuration=config, mesh=mesh)
     mesh = options.mesh3d
     output_dir = os.path.join(options.output_directory, config, approach, f'{family}1', f'target{target:.0f}')
     options.output_directory = create_directory(output_dir)
     create_directory(os.path.join(output_dir, 'Tracer3d'))
-
-    # Create solver
     solver_obj = PlantSolver3d(options, optimise=profile)
     options.apply_boundary_conditions(solver_obj)
     options.apply_initial_conditions(solver_obj)
 
-    # Solve
-    try:
-        solver_obj.iterate()
-    except firedrake.ConvergenceError:
-        print_output('Failed to converge with iterative solver parameters, trying direct.')
-        options.tracer_timestepper_options.solver_parameters['pc_type'] = 'lu'
-        solver_obj.iterate()
+    # Forward solve
+    solver_obj.iterate()
+
+    # Check for QoI convergence
     tracer_3d = solver_obj.fields.tracer_3d
     File(os.path.join(output_dir, 'Tracer3d', 'tracer_3d.pvd')).write(tracer_3d)
     qoi = options.qoi(tracer_3d)
@@ -102,12 +97,7 @@ for i in range(maxiter):
         metric = ee.recover_hessian(uv, tracer_3d)
     else:
         solve_blocks = get_solve_blocks()
-        try:
-            compute_gradient(qoi, Control(options.tracer['tracer_3d'].diffusivity))
-        except firedrake.ConvergenceError:
-            print_output('Failed to converge with iterative solver parameters, trying direct.')
-            solve_blocks[-1].adj_kwargs['solver_parameters']['pc_type'] = 'lu'
-            compute_gradient(qoi, Control(options.tracer['tracer_3d'].diffusivity))
+        compute_gradient(qoi, Control(options.tracer['tracer_3d'].diffusivity))
         adjoint_tracer_3d = solve_blocks[-1].adj_sol
         with stop_annotating():
             metric = ee.metric(uv, tracer_3d, uv, adjoint_tracer_3d,
@@ -142,12 +132,7 @@ if converged_reason == 'element_count':
     solver_obj = PlantSolver3d(options)
     options.apply_boundary_conditions(solver_obj)
     options.apply_initial_conditions(solver_obj)
-    try:
-        solver_obj.iterate()
-    except firedrake.ConvergenceError:
-        print_output('Failed to converge with iterative solver parameters, trying direct.')
-        options.tracer_timestepper_options.solver_parameters['pc_type'] = 'lu'
-        solver_obj.iterate()
+    solver_obj.iterate()
     tracer_3d = solver_obj.fields.tracer_3d
     if not profile:
         File(os.path.join(output_dir, 'Tracer3d', 'tracer_3d.pvd')).write(tracer_3d)

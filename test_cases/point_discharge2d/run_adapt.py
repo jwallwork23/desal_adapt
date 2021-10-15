@@ -64,24 +64,20 @@ tape = get_working_tape()
 for i in range(maxiter):
     tape.clear_tape()
 
-    # Set parameters
+    # Setup
     options = PointDischarge2dOptions(level=level, family=family, configuration=config, mesh=mesh)
     mesh = options.mesh2d
     output_dir = os.path.join(options.output_directory, config, approach, f'{family}1', f'target{target:.0f}')
     options.output_directory = create_directory(output_dir)
-
-    # Create solver
     solver_obj = PlantSolver2d(options, optimise=profile)
     options.apply_boundary_conditions(solver_obj)
     options.apply_initial_conditions(solver_obj)
 
-    # Solve
-    try:
+    # Forward solve
+    with firedrake.PETSc.Log.Event("solve_forward"):
         solver_obj.iterate()
-    except firedrake.ConvergenceError:
-        print_output('Failed to converge with iterative solver parameters, trying direct.')
-        options.tracer_timestepper_options.solver_parameters['pc_type'] = 'lu'
-        solver_obj.iterate()
+
+    # Check for QoI convergence
     tracer_2d = solver_obj.fields.tracer_2d
     qoi = options.qoi(tracer_2d)
     if qoi_old is not None and i > miniter:
@@ -97,12 +93,7 @@ for i in range(maxiter):
     else:
         solve_blocks = get_solve_blocks()
         with firedrake.PETSc.Log.Event("solve_adjoint"):
-            try:
-                compute_gradient(qoi, Control(options.tracer['tracer_2d'].diffusivity))
-            except firedrake.ConvergenceError:
-                print_output('Failed to converge with iterative solver parameters, trying direct.')
-                solve_blocks[-1].adj_kwargs['solver_parameters']['pc_type'] = 'lu'
-                compute_gradient(qoi, Control(options.tracer['tracer_2d'].diffusivity))
+            compute_gradient(qoi, Control(options.tracer['tracer_2d'].diffusivity))
         adjoint_tracer_2d = solve_blocks[-1].adj_sol
         with stop_annotating():
             metric = ee.metric(uv, tracer_2d, uv, adjoint_tracer_2d,
