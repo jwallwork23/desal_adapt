@@ -87,7 +87,8 @@ class PointDischarge2dOptions(PlantOptions):
             'ksp_converged_reason': None,
             'ksp_max_it': 10000,
             'ksp_type': 'gmres',
-            'pc_type': 'bjacobi',
+            'ksp_gmres_restart': 20,
+            'pc_type': 'ilu',
         })
 
         # I/O

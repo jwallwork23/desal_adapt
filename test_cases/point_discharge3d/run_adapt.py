@@ -24,9 +24,10 @@ parser.add_argument('-maxiter', 35)
 parser.add_argument('-element_rtol', 0.005)
 parser.add_argument('-qoi_rtol', 0.005)
 parser.add_argument('-h_min', 1.0e-10)
-parser.add_argument('-h_max', 1.0e+02)
+parser.add_argument('-h_max', 1.0e+01)
 parser.add_argument('-a_max', 1.0e+05)
 parser.add_argument('-flux_form', False)
+parser.add_argument('-profile', False)
 parsed_args = parser.parse_args()
 config = parsed_args.configuration
 level = parsed_args.level
@@ -53,6 +54,7 @@ assert h_max > h_min
 a_max = parsed_args.a_max
 assert a_max > 1.0
 flux_form = parsed_args.flux_form
+profile = parsed_args.profile
 
 # Adapt until mesh convergence is achieved
 mesh = None
@@ -73,7 +75,7 @@ for i in range(maxiter):
     create_directory(os.path.join(output_dir, 'Tracer3d'))
 
     # Create solver
-    solver_obj = PlantSolver3d(options)
+    solver_obj = PlantSolver3d(options, optimise=profile)
     options.apply_boundary_conditions(solver_obj)
     options.apply_initial_conditions(solver_obj)
 
@@ -114,8 +116,9 @@ for i in range(maxiter):
                                norm_order=p,
                                flux_form=flux_form)
     if approach not in ('anisotropic_dwr', 'weighted_gradient'):
+        enforce_element_constraints(metric, 1.0e-10, 1.0e+02, 1.0e+12, optimise=profile)
         space_normalise(metric, target, p)
-    enforce_element_constraints(metric, h_min, h_max, a_max)
+    enforce_element_constraints(metric, h_min, h_max, a_max, optimise=profile)
 
     # Adapt mesh and check convergence
     mesh = adapt(mesh, metric)
@@ -146,6 +149,7 @@ if converged_reason == 'element_count':
         options.tracer_timestepper_options.solver_parameters['pc_type'] = 'lu'
         solver_obj.iterate()
     tracer_3d = solver_obj.fields.tracer_3d
-    File(os.path.join(output_dir, 'Tracer3d', 'tracer_3d.pvd')).write(tracer_3d)
+    if not profile:
+        File(os.path.join(output_dir, 'Tracer3d', 'tracer_3d.pvd')).write(tracer_3d)
     qoi = options.qoi(tracer_3d)
 print_output(f'Converged QoI = {qoi:.8e}')

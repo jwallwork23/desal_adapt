@@ -10,6 +10,7 @@ class ErrorEstimator(object):
     Error estimation for advection-diffusion
     desalination outfall modelling applications.
     """
+    @PETSc.Log.EventDecorator('ErrorEstimator.__init__')
     def __init__(self, options,
                  mesh=None,
                  norm_type='L2',
@@ -32,10 +33,11 @@ class ErrorEstimator(object):
         elif hasattr(options, 'mesh3d'):
             self.mesh = options.mesh3d
         else:
-            raise ValueError("Mesh not provided!")
+            raise ValueError('Mesh not provided!')
         self.dim = self.mesh.topological_dimension()
         self.name = f'tracer_{self.dim}d'
         self.P0 = FunctionSpace(self.mesh, "DG", 0)
+        self.P0_vec = VectorFunctionSpace(self.mesh, "DG", 0)
         self.p0test = TestFunction(self.P0)
         self.p0trial = TrialFunction(self.P0)
         self.P1_ten = TensorFunctionSpace(self.mesh, "CG", 1)
@@ -269,6 +271,7 @@ class ErrorEstimator(object):
         """
         raise NotImplementedError  # TODO
 
+    @PETSc.Log.EventDecorator('ErrorEstimator.strong_residual')
     def strong_residual(self, *args):
         """
         Compute the strong residual over a single
@@ -278,6 +281,7 @@ class ErrorEstimator(object):
         Psi = self._Psi_steady(*args) if self.steady else self._Psi_unsteady(*args)
         return assemble(self.p0test*abs(Psi)*dx) if self.norm_type == 'L1' else sqrt(abs(assemble(self.p0test*Psi*Psi*dx)))
 
+    @PETSc.Log.EventDecorator('ErrorEstimator.flux_terms')
     def flux_terms(self, *args):
         """
         Compute flux jump terms over a single
@@ -287,6 +291,7 @@ class ErrorEstimator(object):
         # TODO: Account for boundary conditions
         return self._psi_steady(*args) if self.steady else self._psi_unsteady(*args)
 
+    @PETSc.Log.EventDecorator('ErrorEstimator.potential')
     def potential(self, *args):
         """
         Compute flux form potential over a single
@@ -295,6 +300,7 @@ class ErrorEstimator(object):
         """
         return self._potential_steady(*args) if self.steady else self._potential_unsteady(*args)
 
+    @PETSc.Log.EventDecorator('ErrorEstimator.bnd_potential')
     def bnd_potential(self, *args):
         """
         Compute boundary part of the flux form
@@ -303,30 +309,22 @@ class ErrorEstimator(object):
         """
         return self._bnd_potential_steady(*args) if self.steady else self._bnd_potential_unsteady(*args)
 
+    @PETSc.Log.EventDecorator('ErrorEstimator.source')
     def source(self):
         """
         Source term for the advection-diffusion equation.
         """
         return self._source_steady() if self.steady else self._source_unsteady()
 
+    @PETSc.Log.EventDecorator('ErrorEstimator.recover_gradient')
     def recover_gradient(self, f):
         """
         Recover the Laplacian of some scalar field `f`.
         """
-        P1_vec = VectorFunctionSpace(self.mesh, 'CG', 1)
-        g, phi = TrialFunction(P1_vec), TestFunction(P1_vec)
-        a = inner(phi, g)*dx
-        L = f*dot(phi, self.n)*ds - div(phi)*f*dx
-        proj = Function(P1_vec)
-        sp = {
-            'ksp_type': 'gmres',
-            'ksp_gmres_restart': 20,
-            'ksp_rtol': 1.0e-05,
-            'pc_type': 'sor',
-        }
-        solve(a == L, proj, solver_parameters=sp)
-        return proj
+        from pyroteus.interpolation import clement_interpolant
+        return clement_interpolant(interpolate(grad(f), self.P0_vec))
 
+    @PETSc.Log.EventDecorator('ErrorEstimator.recover_laplacian')
     def recover_laplacian(self, uv, c):
         """
         Recover the Laplacian of `c`.
@@ -337,6 +335,7 @@ class ErrorEstimator(object):
         else:
             return sqrt(interpolate(inner(div(proj), div(proj)), self.P0))
 
+    @PETSc.Log.EventDecorator('ErrorEstimator.recover_hessian')
     def recover_hessian(self, uv, c):
         """
         Recover the Hessian of `c`.
@@ -345,6 +344,7 @@ class ErrorEstimator(object):
             c = self._replace_supg(c)
         return hessian_metric(recover_hessian(c, mesh=self.mesh))
 
+    @PETSc.Log.EventDecorator('ErrorEstimator.difference_quotient')
     def difference_quotient(self, *args, flux_form=False):
         """
         Evaluate the dual weighted residual
@@ -373,6 +373,7 @@ class ErrorEstimator(object):
         dq.interpolate(abs(dq))  # Ensure positivity
         return dq
 
+    @PETSc.Log.EventDecorator('ErrorEstimator.error_indicator')
     def error_indicator(self, *args, **kwargs):
         """
         Evaluate the error indicator of choice.
@@ -383,6 +384,7 @@ class ErrorEstimator(object):
         else:
             raise NotImplementedError  # TODO
 
+    @PETSc.Log.EventDecorator('ErrorEstimator.metric')
     def metric(self, *args, **kwargs):
         """
         Construct the metric of choice.

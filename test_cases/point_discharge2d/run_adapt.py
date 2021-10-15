@@ -27,6 +27,7 @@ parser.add_argument('-h_min', 1.0e-10)
 parser.add_argument('-h_max', 1.0e+02)
 parser.add_argument('-a_max', 1.0e+05)
 parser.add_argument('-flux_form', False)
+parser.add_argument('-profile', False)
 parsed_args = parser.parse_args()
 config = parsed_args.configuration
 level = parsed_args.level
@@ -53,6 +54,7 @@ assert h_max > h_min
 a_max = parsed_args.a_max
 assert a_max > 1.0
 flux_form = parsed_args.flux_form
+profile = parsed_args.profile
 
 # Adapt until mesh convergence is achieved
 mesh = None
@@ -69,7 +71,7 @@ for i in range(maxiter):
     options.output_directory = create_directory(output_dir)
 
     # Create solver
-    solver_obj = PlantSolver2d(options)
+    solver_obj = PlantSolver2d(options, optimise=profile)
     options.apply_boundary_conditions(solver_obj)
     options.apply_initial_conditions(solver_obj)
 
@@ -94,12 +96,13 @@ for i in range(maxiter):
         metric = ee.recover_hessian(uv, tracer_2d)
     else:
         solve_blocks = get_solve_blocks()
-        try:
-            compute_gradient(qoi, Control(options.tracer['tracer_2d'].diffusivity))
-        except firedrake.ConvergenceError:
-            print_output('Failed to converge with iterative solver parameters, trying direct.')
-            solve_blocks[-1].adj_kwargs['solver_parameters']['pc_type'] = 'lu'
-            compute_gradient(qoi, Control(options.tracer['tracer_2d'].diffusivity))
+        with firedrake.PETSc.Log.Event("solve_adjoint"):
+            try:
+                compute_gradient(qoi, Control(options.tracer['tracer_2d'].diffusivity))
+            except firedrake.ConvergenceError:
+                print_output('Failed to converge with iterative solver parameters, trying direct.')
+                solve_blocks[-1].adj_kwargs['solver_parameters']['pc_type'] = 'lu'
+                compute_gradient(qoi, Control(options.tracer['tracer_2d'].diffusivity))
         adjoint_tracer_2d = solve_blocks[-1].adj_sol
         with stop_annotating():
             metric = ee.metric(uv, tracer_2d, uv, adjoint_tracer_2d,
@@ -108,8 +111,9 @@ for i in range(maxiter):
                                norm_order=p,
                                flux_form=flux_form)
     if approach not in ('anisotropic_dwr', 'weighted_gradient'):
+        enforce_element_constraints(metric, 1.0e-10, 1.0e+02, 1.0e+12, optimise=True)
         space_normalise(metric, target, p)
-    enforce_element_constraints(metric, h_min, h_max, a_max)
+    enforce_element_constraints(metric, h_min, h_max, a_max, optimise=profile)
 
     # Adapt mesh and check convergence
     mesh = adapt(mesh, metric)
@@ -124,13 +128,14 @@ for i in range(maxiter):
         raise ConvergenceError(f"Failed to converge after {maxiter} iterations.")
 
 # Plot
-fig, axes = plt.subplots(figsize=(8, 2.5))
-levels = np.linspace(0, 3, 50)
-triplot(mesh, axes=axes, interior_kw={'linewidth': 0.1}, boundary_kw={'color': 'k'})
-axes.axis(False)
-axes.set_xlim([0, 50])
-axes.set_ylim([0, 10])
-plt.tight_layout()
-cwd = os.path.join(os.path.dirname(__file__))
-plot_dir = os.path.join(cwd, 'plots', config, f'{family}1')
-plt.savefig(os.path.join(create_directory(plot_dir), f'{approach}_mesh_target{target:.0f}.jpg'), dpi=300)
+if not profile:
+    fig, axes = plt.subplots(figsize=(8, 2.5))
+    levels = np.linspace(0, 3, 50)
+    triplot(mesh, axes=axes, interior_kw={'linewidth': 0.1}, boundary_kw={'color': 'k'})
+    axes.axis(False)
+    axes.set_xlim([0, 50])
+    axes.set_ylim([0, 10])
+    plt.tight_layout()
+    cwd = os.path.join(os.path.dirname(__file__))
+    plot_dir = os.path.join(cwd, 'plots', config, f'{family}1')
+    plt.savefig(os.path.join(create_directory(plot_dir), f'{approach}_mesh_target{target:.0f}.jpg'), dpi=300)

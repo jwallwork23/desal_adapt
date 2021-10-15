@@ -30,6 +30,7 @@ class PlantOptions(ModelOptions2d):
         or as a density field (continuous).
         """).tag(config=True)
 
+    @PETSc.Log.EventDecorator('PlantOptions.__init__')
     def __init__(self, **kwargs):
         super(PlantOptions, self).__init__()
         self._isfrozen = False
@@ -39,6 +40,7 @@ class PlantOptions(ModelOptions2d):
             raise NotImplementedError  # TODO
         self.update(kwargs)
 
+    @PETSc.Log.EventDecorator('PlantOptions.setup_mesh')
     def setup_mesh(self, mesh):
         """
         Endow a mesh with cell size and boundary length data.

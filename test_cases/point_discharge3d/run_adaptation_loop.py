@@ -67,7 +67,7 @@ tape = get_working_tape()
 if approach == 'hessian':
     stop_annotating()
 for level in range(num_refinements + 1):
-    target = 400.0*4.0**level
+    target = 500.0*4.0**level
     cpu_times = []
     converged_reason = None
     for rep in range(num_repetitions):
@@ -133,8 +133,9 @@ for level in range(num_refinements + 1):
                                        norm_order=p,
                                        flux_form=flux_form)
             if approach not in ('anisotropic_dwr', 'weighted_gradient'):
+                enforce_element_constraints(metric, 1.0e-10, 1.0e+02, 1.0e+12, optimise=True)
                 space_normalise(metric, target, p)
-            enforce_element_constraints(metric, h_min, h_max, a_max)
+            enforce_element_constraints(metric, h_min, h_max, a_max, optimise=True)
 
             # Adapt mesh and check convergence
             mesh = adapt(mesh, metric)

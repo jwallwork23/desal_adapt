@@ -48,3 +48,29 @@ weighted_gradient:
 plot:
 	@python3 plot_convergence.py aligned
 	@python3 plot_convergence.py offset
+
+profile: profile_fixed profile_hessian profile_isotropic_dwr profile_anisotropic_dwr profile_weighted_hessian profile_weighted_gradient
+
+profile_fixed:
+	@for config in aligned offset; do python3 run_fixed_mesh.py $$config -profile 1 -log_view :outputs/$$config/fixed_mesh/cg1/logview.txt:ascii_flamegraph; done
+	@for config in aligned offset; do cd outputs/$$config/fixed_mesh/cg1 && flamegraph.pl logview.txt > flamegraph_$$config.svg && cd ../../../..; done
+
+profile_hessian:
+	@for config in aligned offset; do python3 run_adapt.py $$config hessian -profile 1 -target 8000 -log_view :outputs/$$config/hessian/cg1/logview.txt:ascii_flamegraph; done
+	@for config in aligned offset; do cd outputs/$$config/hessian/cg1 && flamegraph.pl logview.txt > flamegraph_$$config.svg && cd ../../../..; done
+
+profile_isotropic_dwr:
+	@for config in aligned offset; do python3 run_adapt.py $$config isotropic_dwr -profile 1 -target 8000 -log_view :outputs/$$config/isotropic_dwr/cg1/logview.txt:ascii_flamegraph; done
+	@for config in aligned offset; do cd outputs/$$config/isotropic_dwr/cg1 && flamegraph.pl logview.txt > flamegraph_$$config.svg && cd ../../../..; done
+
+profile_anisotropic_dwr:
+	@for config in aligned offset; do python3 run_adapt.py $$config anisotropic_dwr -profile 1 -target 16000 -log_view :outputs/$$config/anisotropic_dwr/cg1/logview.txt:ascii_flamegraph; done
+	@for config in aligned offset; do cd outputs/$$config/anisotropic_dwr/cg1 && flamegraph.pl logview.txt > flamegraph_$$config.svg && cd ../../../..; done
+
+profile_weighted_hessian:
+	@for config in aligned offset; do python3 run_adapt.py $$config weighted_hessian -profile 1 -target 6000 -log_view :outputs/$$config/weighted_hessian/cg1/logview.txt:ascii_flamegraph; done
+	@for config in aligned offset; do cd outputs/$$config/weighted_hessian/cg1 && flamegraph.pl logview.txt > flamegraph_$$config.svg && cd ../../../..; done
+
+profile_weighted_gradient:
+	@for config in aligned offset; do python3 run_adapt.py $$config weighted_gradient -profile 1 -target 8000 -log_view :outputs/$$config/weighted_gradient/cg1/logview.txt:ascii_flamegraph; done
+	@for config in aligned offset; do cd outputs/$$config/weighted_gradient/cg1 && flamegraph.pl logview.txt > flamegraph_$$config.svg && cd ../../../..; done

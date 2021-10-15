@@ -13,6 +13,7 @@ class PlantSolver2d(FlowSolver2d):
     Modified solver which accepts :class:`ModelOptions2d` objects
     with more attributes than expected.
     """
+    @PETSc.Log.EventDecorator('PlantSolver2d.__init__')
     def __init__(self, options, mesh=None, optimise=False):
         """
         :arg options: :class:`PlantOptions` parameter object
@@ -55,6 +56,7 @@ class PlantSolver2d(FlowSolver2d):
         super(PlantSolver2d, self).create_equations()
         self.options.test_function = self.equations.tracer_2d.test
 
+    @PETSc.Log.EventDecorator('PlantSolver2d.compute_mesh_stats')
     def compute_mesh_stats(self):
         """
         Computes number of elements, nodes etc and prints to sdtout
@@ -85,6 +87,7 @@ class PlantSolver3d(PlantSolver2d):
     Modified solver which accepts :class:`ModelOptions2d` objects
     with more attributes than expected.
     """
+    @PETSc.Log.EventDecorator('PlantSolver3d.__init__')
     def __init__(self, options, mesh=None, optimise=False):
         """
         :arg options: :class:`PlantOptions` parameter object
@@ -119,6 +122,7 @@ class PlantSolver3d(PlantSolver2d):
         self.solve_tracer = False
         self._isfrozen = True
 
+    @PETSc.Log.EventDecorator('PlantSolver3d.compute_mesh_stats')
     def compute_mesh_stats(self):
         """
         Computes number of elements, nodes etc and prints to sdtout
@@ -143,6 +147,7 @@ class PlantSolver3d(PlantSolver2d):
         print_output(f'Number of cores: {self.comm.size}')
         print_output(f'Tracer DOFs per core: ~{dofs_tracer3d_core:.1f}')
 
+    @PETSc.Log.EventDecorator('PlantSolver3d.create_function_spaces')
     def create_function_spaces(self):
         """
         Creates function spaces
@@ -179,6 +184,7 @@ class PlantSolver3d(PlantSolver2d):
 
         self._isfrozen = True
 
+    @PETSc.Log.EventDecorator('PlantSolver3d.create_equations')
     def create_equations(self):
         """
         Creates equation instances
@@ -218,6 +224,7 @@ class PlantSolver3d(PlantSolver2d):
 
         self._isfrozen = True
 
+    @PETSc.Log.EventDecorator('PlantSolver3d.get_tracer_timestepper')
     def get_tracer_timestepper(self, integrator, label):
         """
         Gets tracer timestepper object with appropriate parameters
@@ -239,6 +246,7 @@ class PlantSolver3d(PlantSolver2d):
         return integrator(self.equations[label], self.fields[label], fields, self.dt,
                           self.options.tracer_timestepper_options, bcs)
 
+    @PETSc.Log.EventDecorator('PlantSolver3d.assign_initial_conditions')
     def assign_initial_conditions(self, uv=None, **tracers):
         r"""
         Assigns initial conditions

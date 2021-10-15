@@ -4,6 +4,7 @@ from thetis.utility import *
 __all__ = ["anisotropic_cell_size_3d"]
 
 
+@PETSc.Log.EventDecorator('anisotropic_cell_size_3d')
 def anisotropic_cell_size_3d(mesh):
     """
     Measure of cell size for anisotropic meshes, as described in

@@ -72,6 +72,9 @@ class Parser(object):
                 Toggle whether to use the flux form of the difference quotient
                 error indicator (default {:b}).
                 """},
+            'profile': {'type': bool, 'msg': """
+                Is this a profiling or timed run? (default {:b})
+                """},
             'load_index': {'type': int, 'msg': """
                 Index for loading mesh and metric data from file (default {:d}).
                 """},
@@ -102,7 +105,7 @@ class Parser(object):
         Parse arguments and return as an :class:`AttrDict`.
         """
         from thetis.utility import AttrDict
-        parsed = self._parser.parse_args()
+        parsed, unknown = self._parser.parse_known_args()
         out = AttrDict()
         for tag in self._added:
             p = getattr(parsed, tag)
