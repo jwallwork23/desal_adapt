@@ -40,15 +40,11 @@ class PlantOptions(ModelOptions2d):
             raise NotImplementedError  # TODO
         self.update(kwargs)
 
-    @PETSc.Log.EventDecorator('PlantOptions.setup_mesh')
     def setup_mesh(self, mesh):
         """
         Endow a mesh with cell size and boundary length data.
         """
-        P1 = FunctionSpace(mesh, "CG", 1)
-        boundary_markers = sorted(mesh.exterior_facets.unique_markers)
-        one = Function(P1).assign(1.0)
-        mesh.boundary_len = OrderedDict({i: assemble(one*ds(int(i))) for i in boundary_markers})
+        mesh.boundary_len = 2*(self.domain_length + self.domain_width)
 
     def get_update_forcings(self, solver_obj):
         return lambda t: None
