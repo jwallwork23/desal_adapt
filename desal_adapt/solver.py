@@ -1,7 +1,8 @@
-from pyroteus.thetis_compat import FlowSolver2d
 from thetis.utility import *
 from thetis.callback import CallbackManager
 from thetis.field_defs import field_metadata
+from pyroteus.thetis_compat import FlowSolver2d
+from pyroteus.log import debug
 from . import tracer_eq_3d
 
 
@@ -20,6 +21,7 @@ class PlantSolver2d(FlowSolver2d):
         :kwarg mesh: :class:`MeshGeometry` upon which to solve
         :kwarg optimise: is this a timed run?
         """
+        debug("Initialising solver")
         self._initialized = False
         self.options = options
         self.mesh2d = mesh or options.mesh2d
@@ -46,21 +48,32 @@ class PlantSolver2d(FlowSolver2d):
         self.solve_tracer = False
         self._isfrozen = True
 
+        self.initialize()
+        options.apply_boundary_conditions(self)
+        options.apply_initial_conditions(self)
+
     def create_function_spaces(self):
+        debug("Creating function spaces")
         super(PlantSolver2d, self).create_function_spaces()
         self.options._isfrozen = False
         self.options.Q = self.function_spaces.Q_2d
         self.options._isfrozen = True
 
     def create_equations(self):
+        debug("Creating equations")
         super(PlantSolver2d, self).create_equations()
         self.options.test_function = self.equations.tracer_2d.test
+
+    def create_timestepper(self):
+        debug("Creating timestepper")
+        super(PlantSolver2d, self).create_timestepper()
 
     @PETSc.Log.EventDecorator('PlantSolver2d.compute_mesh_stats')
     def compute_mesh_stats(self):
         """
         Computes number of elements, nodes etc and prints to sdtout
         """
+        debug("Computing mesh stats")
         nnodes = self.function_spaces.P1_2d.dim()
         P1DG_2d = self.function_spaces.P1DG_2d
         nelem2d = int(P1DG_2d.dim()/P1DG_2d.ufl_cell().num_vertices())
@@ -147,6 +160,28 @@ class PlantSolver3d(PlantSolver2d):
         print_output(f'Number of cores: {self.comm.size}')
         print_output(f'Tracer DOFs per core: ~{dofs_tracer3d_core:.1f}')
 
+    @PETSc.Log.EventDecorator("PlantSolver2d.create_function_spaces")
+    def create_function_spaces(self):
+        """
+        Creates function spaces
+
+        Function spaces are accessible via :attr:`.function_spaces`
+        object.
+        """
+        self._isfrozen = False
+        DG = 'DG' if self.mesh2d.ufl_cell().cellname() == 'triangle' else 'DQ'
+        self.function_spaces.P0_2d = get_functionspace(self.mesh2d, DG, 0, name='P0_2d')
+        self.function_spaces.P1_2d = get_functionspace(self.mesh2d, 'CG', 1, name='P1_2d')
+        self.function_spaces.P1DG_2d = get_functionspace(self.mesh2d, DG, 1, name='P1DG_2d')
+        self.function_spaces.U_2d = VectorFunctionSpace(self.mesh2d, DG, self.options.polynomial_degree, name='U_2d')
+        if self.options.tracer_element_family == 'dg':
+            self.function_spaces.Q_2d = get_functionspace(self.mesh2d, 'DG', 1, name='Q_2d')
+        elif self.options.tracer_element_family == 'cg':
+            self.function_spaces.Q_2d = get_functionspace(self.mesh2d, 'CG', 1, name='Q_2d')
+        else:
+            raise Exception('Unsupported finite element family {:}'.format(self.options.tracer_element_family))
+        self._isfrozen = True
+
     @PETSc.Log.EventDecorator('PlantSolver3d.create_function_spaces')
     def create_function_spaces(self):
         """
@@ -159,9 +194,7 @@ class PlantSolver3d(PlantSolver2d):
         DG = 'DG' if self.mesh3d.ufl_cell().cellname() == 'tetrahedron' else 'DQ'
         self.function_spaces.P0_3d = FunctionSpace(self.mesh3d, DG, 0, name='P0_3d')
         self.function_spaces.P1_3d = FunctionSpace(self.mesh3d, 'CG', 1, name='P1_3d')
-        self.function_spaces.P1v_3d = VectorFunctionSpace(self.mesh3d, 'CG', 1, name='P1v_3d')
-        self.function_spaces.P1DG_3d = FunctionSpace(self.mesh3d, DG, 1, name='P1DG_3d')
-        # self.function_spaces.P1DGv_3d = VectorFunctionSpace(self.mesh3d, DG, 1, name='P1DGv_3d')
+        self.function_spaces.P1DG_3d = get_functionspace(self.mesh3d, DG, 1, name='P1DG_3d')
 
         # Velocity space
         if self.options.element_family == 'dg-cg':
