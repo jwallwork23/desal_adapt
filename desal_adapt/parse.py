@@ -72,11 +72,14 @@ class Parser(object):
                 Toggle whether to use the flux form of the difference quotient
                 error indicator (default {:b}).
                 """},
+            'load_index': {'type': int, 'msg': """
+                Index for loading mesh and metric data from file (default {:d}).
+                """},
             'profile': {'type': bool, 'msg': """
                 Is this a profiling or timed run? (default {:b})
                 """},
-            'load_index': {'type': int, 'msg': """
-                Index for loading mesh and metric data from file (default {:d}).
+            'debug': {'type': bool, 'msg': """
+                Turn debugging on? (default {:b})
                 """},
         }
         self._added = {}
