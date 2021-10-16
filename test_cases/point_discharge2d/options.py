@@ -31,6 +31,7 @@ class PointDischarge2dOptions(PlantOptions):
         :kwarg mesh: user-provided mesh
         :kwarg shift: number of units to shift the point source to the right
         """
+        debug("Initialising PointDischarge2dOptions")
         super(PointDischarge2dOptions, self).__init__()
         assert configuration in ('aligned', 'offset')
         assert level >= 0
@@ -98,11 +99,13 @@ class PointDischarge2dOptions(PlantOptions):
         self._isfrozen = True
 
     def apply_boundary_conditions(self, solver_obj):
+        debug("Applying boundary conditions")
         if len(solver_obj.function_spaces.keys()) == 0:
             solver_obj.create_function_spaces()
         solver_obj.bnd_functions['tracer'] = self.bnd_conditions
 
     def apply_initial_conditions(self, solver_obj):
+        debug("Applying initial conditions")
         if len(solver_obj.function_spaces.keys()) == 0:
             solver_obj.create_function_spaces()
         uv = Function(solver_obj.function_spaces.U_2d)
@@ -128,7 +131,9 @@ class PointDischarge2dOptions(PlantOptions):
         scaling = 1.0 if np.isclose(area, 0.0) else pi*r**2/area
         return scaling*ball
 
+    @PETSc.Log.EventDecorator("PointDischarge2dOptions.qoi")
     def qoi(self, solution, quadrature_degree=12):
+        debug("Computing QoI")
         dx_qoi = dx(degree=quadrature_degree)
         return assemble(self.qoi_kernel*solution*dx_qoi)
 

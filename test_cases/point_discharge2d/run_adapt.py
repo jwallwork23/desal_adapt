@@ -28,6 +28,7 @@ parser.add_argument('-h_max', 1.0e+02)
 parser.add_argument('-a_max', 1.0e+05)
 parser.add_argument('-flux_form', False)
 parser.add_argument('-profile', False)
+parser.add_argument('-debug', False)
 parsed_args = parser.parse_args()
 config = parsed_args.configuration
 level = parsed_args.level
@@ -55,6 +56,8 @@ a_max = parsed_args.a_max
 assert a_max > 1.0
 flux_form = parsed_args.flux_form
 profile = parsed_args.profile
+if parsed_args.debug:
+    set_log_level(DEBUG)
 
 # Adapt until mesh convergence is achieved
 mesh = None
@@ -69,9 +72,8 @@ for i in range(maxiter):
     mesh = options.mesh2d
     output_dir = os.path.join(options.output_directory, config, approach, f'{family}1', f'target{target:.0f}')
     options.output_directory = create_directory(output_dir)
+    options.no_exports = profile
     solver_obj = PlantSolver2d(options, optimise=profile)
-    options.apply_boundary_conditions(solver_obj)
-    options.apply_initial_conditions(solver_obj)
 
     # Forward solve
     with firedrake.PETSc.Log.Event("solve_forward"):
@@ -89,25 +91,32 @@ for i in range(maxiter):
     ee = ErrorEstimator(options, error_estimator='difference_quotient', metric=approach)
     uv = solver_obj.fields.uv_2d
     if approach == 'hessian':
+        debug("Recovering Hessian")
         metric = ee.recover_hessian(uv, tracer_2d)
     else:
+        debug("Solving adjoint problem")
         solve_blocks = get_solve_blocks()
         with firedrake.PETSc.Log.Event("solve_adjoint"):
             compute_gradient(qoi, Control(options.tracer['tracer_2d'].diffusivity))
         adjoint_tracer_2d = solve_blocks[-1].adj_sol
         with stop_annotating():
+            debug("Computing metric")
             metric = ee.metric(uv, tracer_2d, uv, adjoint_tracer_2d,
                                target_complexity=target,
                                convergence_rate=alpha,
                                norm_order=p,
                                flux_form=flux_form)
-    if approach not in ('anisotropic_dwr', 'weighted_gradient'):
-        enforce_element_constraints(metric, 1.0e-10, 1.0e+02, 1.0e+12, optimise=True)
-        space_normalise(metric, target, p)
-    enforce_element_constraints(metric, h_min, h_max, a_max, optimise=profile)
+    with stop_annotating():
+        if approach not in ('anisotropic_dwr', 'weighted_gradient'):
+            enforce_element_constraints(metric, 1.0e-10, 1.0e+02, 1.0e+12, optimise=True)
+            space_normalise(metric, target, p)
+        debug("Enforcing element constraints")
+        enforce_element_constraints(metric, h_min, h_max, a_max, optimise=profile)
 
     # Adapt mesh and check convergence
+    debug("Adapting mesh")
     mesh = adapt(mesh, metric)
+    debug("Checking for element convergence")
     elements = mesh.num_cells()
     if elements_old is not None and i > miniter:
         if np.abs(elements - elements_old) < element_rtol*elements_old:

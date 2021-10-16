@@ -21,10 +21,8 @@ options = PointDischarge3dOptions(level=level, family=family, configuration=conf
 output_dir = os.path.join(options.output_directory, config, 'fixed_mesh', f'{family}1', f'level{level}')
 options.output_directory = create_directory(output_dir)
 
-# Create solver
+# Setup solver
 solver_obj = PlantSolver3d(options)
-options.apply_boundary_conditions(solver_obj)
-options.apply_initial_conditions(solver_obj)
 
 # Solve
 solver_obj.iterate()

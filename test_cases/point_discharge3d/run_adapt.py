@@ -72,10 +72,9 @@ for i in range(maxiter):
     mesh = options.mesh3d
     output_dir = os.path.join(options.output_directory, config, approach, f'{family}1', f'target{target:.0f}')
     options.output_directory = create_directory(output_dir)
+    options.no_exports = profile
     create_directory(os.path.join(output_dir, 'Tracer3d'))
     solver_obj = PlantSolver3d(options, optimise=profile)
-    options.apply_boundary_conditions(solver_obj)
-    options.apply_initial_conditions(solver_obj)
 
     # Forward solve
     solver_obj.iterate()

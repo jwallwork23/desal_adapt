@@ -24,12 +24,10 @@ options = AnalyticalForcingsOptions(level=level, configuration=config, family=fa
 options.simulation_end_time = num_tidal_cycles*options.tide_time
 output_dir = os.path.join(options.output_directory, config, 'fixed_mesh', f'{family}1', f'level{level}')
 options.output_directory = create_directory(output_dir)
-
-# Create solver
-solver_obj = PlantSolver2d(options)
-options.apply_boundary_conditions(solver_obj)
 options.fields_to_export = ['tracer_2d']
-options.apply_initial_conditions(solver_obj)
+
+# Setup solver
+solver_obj = PlantSolver2d(options)
 
 # Solve
 solver_obj.iterate(update_forcings=options.get_update_forcings(solver_obj))

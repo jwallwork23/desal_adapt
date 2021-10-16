@@ -44,8 +44,6 @@ for level in range(num_refinements + 1):
 
         # Setup solver
         solver_obj = PlantSolver2d(options, optimise=True)
-        options.apply_boundary_conditions(solver_obj)
-        options.apply_initial_conditions(solver_obj)
         solver_obj.iterate()
         cpu_times.append(perf_counter() - cpu_timestamp)
 
