@@ -12,8 +12,8 @@ parser.add_argument('configuration', 'aligned', help="""
     Choose from 'aligned' and 'offset'.
     """)
 parser.add_argument('approach', 'hessian')
-parser.add_argument('-num_refinements', 5, help="""
-    Number of mesh refinements to consider (default 5).
+parser.add_argument('-num_refinements', 4, help="""
+    Number of mesh refinements to consider (default 4).
     """)
 parser.add_argument('-num_repetitions', 1, help="""
     Number of times to repeat the simulation (default 1).
@@ -66,6 +66,7 @@ lines = 'qois,dofs,elements,wallclock,iterations\n'
 tape = get_working_tape()
 if approach == 'hessian':
     stop_annotating()
+converged_reason = None
 for level in range(num_refinements + 1):
     target = 250.0*4.0**level
     cpu_times = []
@@ -136,7 +137,7 @@ for level in range(num_refinements + 1):
         cpu_times.append(perf_counter() - cpu_timestamp)
 
     # Logging
-    if converged_reason == 'element'
+    if converged_reason == 'element':
         options = PointDischarge2dOptions(configuration=config, family=family, mesh=mesh)
         mesh = options.mesh2d
         options.output_directory = output_dir

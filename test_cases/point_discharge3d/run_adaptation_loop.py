@@ -66,6 +66,7 @@ lines = 'qois,dofs,elements,wallclock,iterations\n'
 tape = get_working_tape()
 if approach == 'hessian':
     stop_annotating()
+converged_reason = None
 for level in range(num_refinements + 1):
     target = 500.0*4.0**level
     cpu_times = []
@@ -144,7 +145,7 @@ for level in range(num_refinements + 1):
         cpu_times.append(perf_counter() - cpu_timestamp)
 
     # Logging
-    if converged_reason == 'element'
+    if converged_reason == 'element':
         options = PointDischarge3dOptions(configuration=config, family=family, mesh=mesh)
         mesh = options.mesh3d
         options.output_directory = output_dir

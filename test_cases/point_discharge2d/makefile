@@ -1,4 +1,4 @@
-all: uniform hessian isotropic_dwr anisotropic_dwr weighted_hessian weighted_gradient plot
+all: convergence
 
 snapshot: snapshot_hessian snapshot_isotropic_dwr snapshot_anisotropic_dwr snapshot_weighted_hessian snapshot_weighted_gradient
 
@@ -21,27 +21,55 @@ snapshot_weighted_gradient:
 	@python3 run_adapt.py aligned weighted_gradient
 	@python3 run_adapt.py offset weighted_gradient
 
+convergence: uniform hessian isotropic_dwr anisotropic_dwr weighted_hessian weighted_gradient plot
+
 uniform:
+	@python3 run_uniform_convergence.py aligned
+	@python3 run_uniform_convergence.py offset
+
+hessian:
+	@python3 run_adaptation_loop.py aligned hessian
+	@python3 run_adaptation_loop.py offset hessian
+
+isotropic_dwr:
+	@python3 run_adaptation_loop.py aligned isotropic_dwr
+	@python3 run_adaptation_loop.py offset isotropic_dwr
+
+anisotropic_dwr:
+	@python3 run_adaptation_loop.py aligned anisotropic_dwr
+	@python3 run_adaptation_loop.py offset anisotropic_dwr
+
+weighted_hessian:
+	@python3 run_adaptation_loop.py aligned weighted_hessian
+	@python3 run_adaptation_loop.py offset weighted_hessian
+
+weighted_gradient:
+	@python3 run_adaptation_loop.py aligned weighted_gradient
+	@python3 run_adaptation_loop.py offset weighted_gradient
+
+time: time_uniform time_hessian time_isotropic_dwr time_anisotropic_dwr time_weighted_hessian time_weighted_gradient plot
+
+time_uniform:
 	@python3 run_uniform_convergence.py aligned -num_repetitions 5
 	@python3 run_uniform_convergence.py offset -num_repetitions 5
 
-hessian:
+time_hessian:
 	@python3 run_adaptation_loop.py aligned hessian -num_repetitions 5
 	@python3 run_adaptation_loop.py offset hessian -num_repetitions 5
 
-isotropic_dwr:
+time_isotropic_dwr:
 	@python3 run_adaptation_loop.py aligned isotropic_dwr -num_repetitions 5
 	@python3 run_adaptation_loop.py offset isotropic_dwr -num_repetitions 5
 
-anisotropic_dwr:
+time_anisotropic_dwr:
 	@python3 run_adaptation_loop.py aligned anisotropic_dwr -num_repetitions 5
 	@python3 run_adaptation_loop.py offset anisotropic_dwr -num_repetitions 5
 
-weighted_hessian:
+time_weighted_hessian:
 	@python3 run_adaptation_loop.py aligned weighted_hessian -num_repetitions 5
 	@python3 run_adaptation_loop.py offset weighted_hessian -num_repetitions 5
 
-weighted_gradient:
+time_weighted_gradient:
 	@python3 run_adaptation_loop.py aligned weighted_gradient -num_repetitions 5
 	@python3 run_adaptation_loop.py offset weighted_gradient -num_repetitions 5
 
