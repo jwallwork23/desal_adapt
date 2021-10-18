@@ -21,12 +21,15 @@ parser.add_argument('configuration', 'aligned', help="""
     Choose from 'aligned' and 'offset'.
     """)
 parser.add_argument('-family', 'cg')
+parser.add_argument('-recovery_method', 'Clement')
 parsed_args = parser.parse_args()
 config = parsed_args.configuration
 assert config in ['aligned', 'offset']
 family = parsed_args.family
 assert family in ['cg', 'dg']
-plot_dir = create_directory(os.path.join('plots', config, f'{family}1'))
+method = parsed_args.recovery_method
+assert method in ['L2', 'Clement']
+plot_dir = create_directory(os.path.join('plots', config, f'{family}1', method))
 dpi = 500
 
 # Load data
