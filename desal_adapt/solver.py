@@ -223,6 +223,9 @@ class PlantSolver3d(PlantSolver2d):
         # self.fields.h_elem_size_3d = Function(self.function_spaces.P1_3d)
         # get_horizontal_elem_size_3d(self.fields.h_elem_size_3d)
         self.depth = Constant(1.0)
+        if 'solution_2d' in field_metadata:
+            field_metadata.pop('solution_2d')
+        self.add_new_field(self.fields.uv_3d, 'solution_2d', 'dummy', 'dummy')  # TODO: avoid this hack
 
         # ----- Equations
         self.equations = AttrDict()
@@ -294,6 +297,4 @@ class PlantSolver3d(PlantSolver2d):
             label = l if len(l) > 3 and l[-3:] == '_3d' else l + '_3d'
             assert label in self.options.tracer, f"Unknown tracer label {label}"
             self.fields[label].project(func)
-
-        self.add_new_field(self.fields.uv_3d, 'solution_2d', 'dummy', 'dummy')  # TODO: avoid this hack
         self.timestepper.initialize(self.fields.uv_3d)
