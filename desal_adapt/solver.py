@@ -69,7 +69,10 @@ class PlantSolver2d(FlowSolver2d):
     def create_equations(self):
         debug("Creating equations")
         super(PlantSolver2d, self).create_equations()
+        self.options._isfrozen = False
         self.options.test_function = self.equations.tracer_2d.test
+        self.options.cell_size = self.equations.tracer_2d.cellsize
+        self.options._isfrozen = True
 
     def create_timestepper(self):
         debug("Creating timestepper")
@@ -243,9 +246,12 @@ class PlantSolver3d(PlantSolver2d):
                 self.tracer_limiter = limiter.VertexBasedP1DGLimiter(self.function_spaces.Q_3d)
             else:
                 self.tracer_limiter = None
-        self.options.test_function = self.equations.tracer_3d.test
 
         self._isfrozen = True
+        self.options._isfrozen = False
+        self.options.test_function = self.equations.tracer_3d.test
+        self.options.cell_size = self.equations.tracer_3d.cellsize
+        self.options._isfrozen = True
 
     @PETSc.Log.EventDecorator('PlantSolver3d.get_tracer_timestepper')
     def get_tracer_timestepper(self, integrator, label):

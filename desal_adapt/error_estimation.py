@@ -44,7 +44,7 @@ class ErrorEstimator(object):
         self.p0trial = TrialFunction(self.P0)
         self.P1_vec = VectorFunctionSpace(self.mesh, "CG", 1)
         self.P1_ten = TensorFunctionSpace(self.mesh, "CG", 1)
-        self.h = CellSize(self.mesh)
+        self.h = options.cell_size
         self.n = FacetNormal(self.mesh)
 
         # Discretisation parameters
