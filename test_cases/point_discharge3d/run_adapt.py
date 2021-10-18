@@ -16,6 +16,7 @@ parser.add_argument('-level', 0, help="""
     Base mesh resolution level (default 0).
     """)
 parser.add_argument('-family', 'cg')
+parser.add_argument('-recovery_method', 'L2')
 parser.add_argument('-target', 10000.0)
 parser.add_argument('-norm_order', 1.0)
 parser.add_argument('-convergence_rate', 6.0)
@@ -32,6 +33,7 @@ parsed_args = parser.parse_args()
 config = parsed_args.configuration
 level = parsed_args.level
 family = parsed_args.family
+method = parsed_args.recovery_method
 approach = parsed_args.approach
 target = parsed_args.target
 assert target > 0.0
@@ -81,7 +83,8 @@ for i in range(maxiter):
 
     # Check for QoI convergence
     tracer_3d = solver_obj.fields.tracer_3d
-    File(os.path.join(output_dir, 'Tracer3d', 'tracer_3d.pvd')).write(tracer_3d)
+    if not profile:
+        File(os.path.join(output_dir, 'Tracer3d', 'tracer_3d.pvd')).write(tracer_3d)
     qoi = options.qoi(tracer_3d)
     print_output(f'QoI = {qoi:.8e}')
     if qoi_old is not None and i > miniter:
@@ -90,7 +93,7 @@ for i in range(maxiter):
             break
 
     # Construct metric
-    ee = ErrorEstimator(options, error_estimator='difference_quotient', metric=approach)
+    ee = ErrorEstimator(options, error_estimator='difference_quotient', metric=approach, recovery_method=method)
     uv = solver_obj.fields.uv_3d
     if approach == 'hessian':
         metric = ee.recover_hessian(uv, tracer_3d)

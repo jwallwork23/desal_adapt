@@ -19,6 +19,9 @@ class Parser(object):
             'error_indicator': {'type': str, 'msg': """
                 Error indicator formulation (default '{:s}').
                 """},
+            'recovery_method': {'type': str, 'msg': """
+                Method for gradient and Hessian recovery (default '{:s}').
+                """},
             'level': {'type': int, 'msg': """
                 Resolution level of initial mesh (default {:d}).
                 """},

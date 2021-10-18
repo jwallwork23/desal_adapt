@@ -21,6 +21,7 @@ parser.add_argument('-num_repetitions', 1, help="""
     This is for timing purposes.
     """)
 parser.add_argument('-family', 'cg')
+parser.add_argument('-recovery_method', 'L2')
 parser.add_argument('-norm_order', 1.0)
 parser.add_argument('-convergence_rate', 6.0)
 parser.add_argument('-miniter', 3)
@@ -34,6 +35,7 @@ parser.add_argument('-flux_form', False)
 parsed_args = parser.parse_args()
 config = parsed_args.configuration
 family = parsed_args.family
+method = parsed_args.recovery_method
 num_refinements = parsed_args.num_refinements
 assert num_refinements >= 1
 num_repetitions = parsed_args.num_repetitions
@@ -107,7 +109,7 @@ for level in range(num_refinements + 1):
                     break
 
             # Construct metric
-            ee = ErrorEstimator(options, error_estimator='difference_quotient', metric=approach)
+            ee = ErrorEstimator(options, error_estimator='difference_quotient', metric=approach, recovery_method=method)
             uv = solver_obj.fields.uv_3d
             if approach == 'hessian':
                 metric = ee.recover_hessian(uv, tracer_3d)

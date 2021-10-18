@@ -16,7 +16,8 @@ class ErrorEstimator(object):
                  norm_type='L2',
                  error_estimator='difference_quotient',
                  metric='isotropic_dwr',
-                 boundary=True):
+                 boundary=True,
+                 recovery_method='L2'):
         """
         :args options: :class:`PlantOptions` parameter object.
         :kwarg mesh: the mesh
@@ -24,6 +25,7 @@ class ErrorEstimator(object):
         :kwarg error_estimator: error estimator type
         :kwarg metric: metric type
         :kwarg boundary: should boundary contributions be considered?
+        :kwarg recovery_method: choose from 'L2' and 'Clement'
         """
         self.options = options
         if mesh is not None:
@@ -40,6 +42,7 @@ class ErrorEstimator(object):
         self.P0_vec = VectorFunctionSpace(self.mesh, "DG", 0)
         self.p0test = TestFunction(self.P0)
         self.p0trial = TrialFunction(self.P0)
+        self.P1_vec = VectorFunctionSpace(self.mesh, "CG", 1)
         self.P1_ten = TensorFunctionSpace(self.mesh, "CG", 1)
         self.h = CellSize(self.mesh)
         self.n = FacetNormal(self.mesh)
@@ -66,6 +69,7 @@ class ErrorEstimator(object):
             raise ValueError(f'Metric type {metric} not recognised')
         self.metric_type = metric
         self.boundary = boundary
+        self.recovery_method = recovery_method
 
     def _replace_supg(self, f):
         if self.options.use_supg_tracer:
@@ -320,9 +324,16 @@ class ErrorEstimator(object):
     def recover_gradient(self, f):
         """
         Recover the Laplacian of some scalar field `f`.
+
+        :arg f: the scalar field to be projected
         """
-        from pyroteus.interpolation import clement_interpolant
-        return clement_interpolant(interpolate(grad(f), self.P0_vec))
+        if self.recovery_method == 'Clement':
+            from pyroteus.interpolation import clement_interpolant
+            return clement_interpolant(interpolate(grad(f), self.P0_vec))
+        elif self.recovery_method == 'L2':
+            return firedrake.project(grad(f), self.P1_vec)
+        else:
+            raise ValueError(f'Gradient recovery method "{method}" not recognised.')
 
     @PETSc.Log.EventDecorator('ErrorEstimator.recover_laplacian')
     def recover_laplacian(self, uv, c):
@@ -342,7 +353,7 @@ class ErrorEstimator(object):
         """
         if self.metric_type == 'weighted_hessian':
             c = self._replace_supg(c)
-        return hessian_metric(recover_hessian(c, mesh=self.mesh))
+        return hessian_metric(recover_hessian(c, mesh=self.mesh, method=self.recovery_method))
 
     @PETSc.Log.EventDecorator('ErrorEstimator.difference_quotient')
     def difference_quotient(self, *args, flux_form=False):
