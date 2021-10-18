@@ -108,7 +108,7 @@ for i in range(maxiter):
                                flux_form=flux_form)
     with stop_annotating():
         if approach not in ('anisotropic_dwr', 'weighted_gradient'):
-            enforce_element_constraints(metric, 1.0e-10, 1.0e+02, 1.0e+12, optimise=True)
+            enforce_element_constraints(metric, 1.0e-10, 1.0e+02, 1.0e+12, optimise=profile)
             space_normalise(metric, target, p)
         debug("Enforcing element constraints")
         enforce_element_constraints(metric, h_min, h_max, a_max, optimise=profile)

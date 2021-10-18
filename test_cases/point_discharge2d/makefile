@@ -47,6 +47,10 @@ weighted_gradient:
 	@python3 run_adaptation_loop.py aligned weighted_gradient
 	@python3 run_adaptation_loop.py offset weighted_gradient
 
+plot:
+	@python3 plot_convergence.py aligned
+	@python3 plot_convergence.py offset
+
 time: time_uniform time_hessian time_isotropic_dwr time_anisotropic_dwr time_weighted_hessian time_weighted_gradient plot
 
 time_uniform:
@@ -73,32 +77,28 @@ time_weighted_gradient:
 	@python3 run_adaptation_loop.py aligned weighted_gradient -num_repetitions 5
 	@python3 run_adaptation_loop.py offset weighted_gradient -num_repetitions 5
 
-plot:
-	@python3 plot_convergence.py aligned
-	@python3 plot_convergence.py offset
-
 profile: profile_fixed profile_hessian profile_isotropic_dwr profile_anisotropic_dwr profile_weighted_hessian profile_weighted_gradient
 
 profile_fixed:
-	@for config in aligned offset; do python3 run_fixed_mesh.py $$config -profile 1 -log_view :outputs/$$config/fixed_mesh/cg1/logview.txt:ascii_flamegraph; done
-	@for config in aligned offset; do cd outputs/$$config/fixed_mesh/cg1 && flamegraph.pl logview.txt > flamegraph_$$config.svg && cd ../../../..; done
+	@python3 run_fixed_mesh.py aligned -profile 1 -log_view :outputs/aligned/fixed_mesh/cg1/logview.txt:ascii_flamegraph
+	@cd outputs/aligned/fixed_mesh/cg1 && flamegraph.pl --title "Fixed mesh 2D" logview.txt > flamegraph_aligned.svg && rm logview.txt
 
 profile_hessian:
-	@for config in aligned offset; do python3 run_adapt.py $$config hessian -profile 1 -target 8000 -log_view :outputs/$$config/hessian/cg1/logview.txt:ascii_flamegraph; done
-	@for config in aligned offset; do cd outputs/$$config/hessian/cg1 && flamegraph.pl logview.txt > flamegraph_$$config.svg && cd ../../../..; done
+	@python3 run_adapt.py aligned hessian -profile 1 -target 8000 -log_view :outputs/aligned/hessian/cg1/logview.txt:ascii_flamegraph
+	@cd outputs/aligned/hessian/cg1 && flamegraph.pl --title "Hessian-based 2D" logview.txt > flamegraph_aligned.svg && rm logview.txt
 
 profile_isotropic_dwr:
-	@for config in aligned offset; do python3 run_adapt.py $$config isotropic_dwr -profile 1 -target 8000 -log_view :outputs/$$config/isotropic_dwr/cg1/logview.txt:ascii_flamegraph; done
-	@for config in aligned offset; do cd outputs/$$config/isotropic_dwr/cg1 && flamegraph.pl logview.txt > flamegraph_$$config.svg && cd ../../../..; done
+	@python3 run_adapt.py aligned isotropic_dwr -profile 1 -target 8000 -log_view :outputs/aligned/isotropic_dwr/cg1/logview.txt:ascii_flamegraph
+	@cd outputs/aligned/isotropic_dwr/cg1 && flamegraph.pl --title "Isotropic DWR 2D" logview.txt > flamegraph_aligned.svg && rm logview.txt
 
 profile_anisotropic_dwr:
-	@for config in aligned offset; do python3 run_adapt.py $$config anisotropic_dwr -profile 1 -target 16000 -log_view :outputs/$$config/anisotropic_dwr/cg1/logview.txt:ascii_flamegraph; done
-	@for config in aligned offset; do cd outputs/$$config/anisotropic_dwr/cg1 && flamegraph.pl logview.txt > flamegraph_$$config.svg && cd ../../../..; done
+	@python3 run_adapt.py aligned anisotropic_dwr -profile 1 -target 16000 -log_view :outputs/aligned/anisotropic_dwr/cg1/logview.txt:ascii_flamegraph
+	@cd outputs/aligned/anisotropic_dwr/cg1 && flamegraph.pl --title "Anisotropic DWR 2D" logview.txt > flamegraph_aligned.svg && rm logview.txt
 
 profile_weighted_hessian:
-	@for config in aligned offset; do python3 run_adapt.py $$config weighted_hessian -profile 1 -target 6000 -log_view :outputs/$$config/weighted_hessian/cg1/logview.txt:ascii_flamegraph; done
-	@for config in aligned offset; do cd outputs/$$config/weighted_hessian/cg1 && flamegraph.pl logview.txt > flamegraph_$$config.svg && cd ../../../..; done
+	@python3 run_adapt.py aligned weighted_hessian -profile 1 -target 6000 -log_view :outputs/aligned/weighted_hessian/cg1/logview.txt:ascii_flamegraph
+	@cd outputs/aligned/weighted_hessian/cg1 && flamegraph.pl --title "Weighted Hessian 2D" logview.txt > flamegraph_aligned.svg && rm logview.txt
 
 profile_weighted_gradient:
-	@for config in aligned offset; do python3 run_adapt.py $$config weighted_gradient -profile 1 -target 8000 -log_view :outputs/$$config/weighted_gradient/cg1/logview.txt:ascii_flamegraph; done
-	@for config in aligned offset; do cd outputs/$$config/weighted_gradient/cg1 && flamegraph.pl logview.txt > flamegraph_$$config.svg && cd ../../../..; done
+	@python3 run_adapt.py aligned weighted_gradient -profile 1 -target 8000 -log_view :outputs/aligned/weighted_gradient/cg1/logview.txt:ascii_flamegraph
+	@cd outputs/aligned/weighted_gradient/cg1 && flamegraph.pl --title "Weighted gradient 2D" logview.txt > flamegraph_aligned.svg && rm logview.txt

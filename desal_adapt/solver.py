@@ -52,7 +52,14 @@ class PlantSolver2d(FlowSolver2d):
         options.apply_boundary_conditions(self)
         options.apply_initial_conditions(self)
 
+    @PETSc.Log.EventDecorator("PlantSolver2d.create_function_spaces")
     def create_function_spaces(self):
+        """
+        Creates function spaces
+
+        Function spaces are accessible via :attr:`.function_spaces`
+        object.
+        """
         debug("Creating function spaces")
         super(PlantSolver2d, self).create_function_spaces()
         self.options._isfrozen = False
@@ -135,6 +142,10 @@ class PlantSolver3d(PlantSolver2d):
         self.solve_tracer = False
         self._isfrozen = True
 
+        self.initialize()
+        options.apply_boundary_conditions(self)
+        options.apply_initial_conditions(self)
+
     @PETSc.Log.EventDecorator('PlantSolver3d.compute_mesh_stats')
     def compute_mesh_stats(self):
         """
@@ -160,28 +171,6 @@ class PlantSolver3d(PlantSolver2d):
         print_output(f'Number of cores: {self.comm.size}')
         print_output(f'Tracer DOFs per core: ~{dofs_tracer3d_core:.1f}')
 
-    @PETSc.Log.EventDecorator("PlantSolver2d.create_function_spaces")
-    def create_function_spaces(self):
-        """
-        Creates function spaces
-
-        Function spaces are accessible via :attr:`.function_spaces`
-        object.
-        """
-        self._isfrozen = False
-        DG = 'DG' if self.mesh2d.ufl_cell().cellname() == 'triangle' else 'DQ'
-        self.function_spaces.P0_2d = get_functionspace(self.mesh2d, DG, 0, name='P0_2d')
-        self.function_spaces.P1_2d = get_functionspace(self.mesh2d, 'CG', 1, name='P1_2d')
-        self.function_spaces.P1DG_2d = get_functionspace(self.mesh2d, DG, 1, name='P1DG_2d')
-        self.function_spaces.U_2d = VectorFunctionSpace(self.mesh2d, DG, self.options.polynomial_degree, name='U_2d')
-        if self.options.tracer_element_family == 'dg':
-            self.function_spaces.Q_2d = get_functionspace(self.mesh2d, 'DG', 1, name='Q_2d')
-        elif self.options.tracer_element_family == 'cg':
-            self.function_spaces.Q_2d = get_functionspace(self.mesh2d, 'CG', 1, name='Q_2d')
-        else:
-            raise Exception('Unsupported finite element family {:}'.format(self.options.tracer_element_family))
-        self._isfrozen = True
-
     @PETSc.Log.EventDecorator('PlantSolver3d.create_function_spaces')
     def create_function_spaces(self):
         """
@@ -190,11 +179,12 @@ class PlantSolver3d(PlantSolver2d):
         Function spaces are accessible via :attr:`.function_spaces`
         object.
         """
+        debug("Creating function spaces")
         self._isfrozen = False
         DG = 'DG' if self.mesh3d.ufl_cell().cellname() == 'tetrahedron' else 'DQ'
         self.function_spaces.P0_3d = FunctionSpace(self.mesh3d, DG, 0, name='P0_3d')
         self.function_spaces.P1_3d = FunctionSpace(self.mesh3d, 'CG', 1, name='P1_3d')
-        self.function_spaces.P1DG_3d = get_functionspace(self.mesh3d, DG, 1, name='P1DG_3d')
+        self.function_spaces.P1DG_3d = FunctionSpace(self.mesh3d, DG, 1, name='P1DG_3d')
 
         # Velocity space
         if self.options.element_family == 'dg-cg':

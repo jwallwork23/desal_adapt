@@ -96,7 +96,8 @@ for i in range(maxiter):
         metric = ee.recover_hessian(uv, tracer_3d)
     else:
         solve_blocks = get_solve_blocks()
-        compute_gradient(qoi, Control(options.tracer['tracer_3d'].diffusivity))
+        with firedrake.PETSc.Log.Event("solve_adjoint"):
+            compute_gradient(qoi, Control(options.tracer['tracer_3d'].diffusivity))
         adjoint_tracer_3d = solve_blocks[-1].adj_sol
         with stop_annotating():
             metric = ee.metric(uv, tracer_3d, uv, adjoint_tracer_3d,
@@ -104,10 +105,11 @@ for i in range(maxiter):
                                convergence_rate=alpha,
                                norm_order=p,
                                flux_form=flux_form)
-    if approach not in ('anisotropic_dwr', 'weighted_gradient'):
-        enforce_element_constraints(metric, 1.0e-10, 1.0e+02, 1.0e+12, optimise=profile)
-        space_normalise(metric, target, p)
-    enforce_element_constraints(metric, h_min, h_max, a_max, optimise=profile)
+    with stop_annotating():
+        if approach not in ('anisotropic_dwr', 'weighted_gradient'):
+            enforce_element_constraints(metric, 1.0e-10, 1.0e+02, 1.0e+12, optimise=profile)
+            space_normalise(metric, target, p)
+        enforce_element_constraints(metric, h_min, h_max, a_max, optimise=profile)
 
     # Adapt mesh and check convergence
     mesh = adapt(mesh, metric)
