@@ -58,6 +58,19 @@ axes.set_xticks([1.0e+03, 1.0e+04, 1.0e+05, 1.0e+06])
 axes.grid(True)
 plt.tight_layout()
 plt.savefig(os.path.join(plot_dir, f'dofs_vs_qoi_{config}.jpg'), dpi=dpi)
+
+# Plot QoI convergence vs wallclock
+fig, axes = plt.subplots()
+if uniform is not None:
+    axes.loglog(uniform['wallclock'], uniform['qois'], '--', marker='x', label='Uniform')
+for data, label, marker in zip(runs, labels, markers):
+    axes.loglog(data['wallclock'], data['qois'], '--', marker=marker, label=label)
+axes.set_xlabel(r'CPU time [$\mathrm s$]')
+axes.set_ylabel('Quantity of interest')
+axes.set_xticks([1.0e+00, 1.0e+01, 1.0e+02, 1.0e+03])
+axes.grid(True)
+plt.tight_layout()
+plt.savefig(os.path.join(plot_dir, f'time_vs_qoi_{config}.jpg'), dpi=dpi)
 if uniform is None:
     print('Cannot plot errors because fixed mesh benchmarks do not exist yet.')
     sys.exit(0)
