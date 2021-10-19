@@ -407,7 +407,7 @@ class ErrorEstimator(object):
                 raise NotImplementedError  # TODO
             return self.recover_hessian(args[1])
         elif self.metric_type == 'isotropic_dwr':
-            return isotropic_metric(self.error_indicator(*args, **kwargs))
+            return isotropic_metric(self.error_indicator(*args, **kwargs), target_space=self.P1_ten)
         elif self.metric_type in ('weighted_hessian', 'anisotropic_dwr'):
             flux_form = kwargs.get('flux_form', False)
             kwargs['approach'] = self.metric_type
@@ -439,7 +439,7 @@ class ErrorEstimator(object):
                 H *= 0.5
 
             # Combine the two
-            return anisotropic_metric([interpolate(ee, self.P0)], [H], **kwargs)
+            return anisotropic_metric([ee], [H], target_space=self.P1_ten, **kwargs)
         elif self.metric_type == 'weighted_gradient':
             F = self.potential(*args[:nargs//2])
             adj = args[nargs//2+1]  # NOTE: Only picks current adjoint solution
@@ -464,8 +464,8 @@ class ErrorEstimator(object):
 
             # Boundary metric
             Fbar = self.bnd_potential(*args[:nargs//2])
-            Hbar = interpolate(recover_boundary_hessian(Fbar, mesh=self.mesh)*adj, P1_ten)
-            Hbar.interpolate(abs(Hbar))
+            Hbar = recover_boundary_hessian(Fbar, mesh=self.mesh, target_space=self.P1_ten)
+            Hbar = interpolate(hessian_metric(Hbar)*abs(adj), self.P1_ten)
 
             # Adjust target complexity
             target = kwargs.get('target_complexity')
