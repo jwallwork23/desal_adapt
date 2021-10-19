@@ -336,7 +336,7 @@ class ErrorEstimator(object):
             raise ValueError(f'Gradient recovery method "{method}" not recognised.')
 
     @PETSc.Log.EventDecorator('ErrorEstimator.recover_laplacian')
-    def recover_laplacian(self, uv, c):
+    def recover_laplacian(self, c):
         """
         Recover the Laplacian of `c`.
         """
@@ -347,7 +347,7 @@ class ErrorEstimator(object):
             return sqrt(interpolate(inner(div(proj), div(proj)), self.P0))
 
     @PETSc.Log.EventDecorator('ErrorEstimator.recover_hessian')
-    def recover_hessian(self, uv, c):
+    def recover_hessian(self, c):
         """
         Recover the Hessian of `c`.
         """
@@ -373,9 +373,9 @@ class ErrorEstimator(object):
         if flux_form:
             R = self.flux_terms(*args[nargs//2:])
         else:
-            R = self.recover_laplacian(*args[nargs//2:2+nargs//2])
+            R = self.recover_laplacian(args[nargs//2+1])
             if not self.steady:  # Average recovered Laplacians
-                R += self.recover_laplacian(*args[-2:])
+                R += self.recover_laplacian(args[-1])
                 R *= 0.5
 
         # Combine the two
@@ -422,9 +422,9 @@ class ErrorEstimator(object):
                 if flux_form:
                     R = self.flux_terms(*args[nargs//2:])
                 else:
-                    R = self.recover_laplacian(*args[nargs//2:2+nargs//2])
+                    R = self.recover_laplacian(args[nargs//2+1])
                     if not self.steady:  # Average recovered Laplacians
-                        R += self.recover_laplacian(*args[-2:])
+                        R += self.recover_laplacian(args[-1])
                         R *= 0.5
                 ee *= R
             elif flux_form:
@@ -432,10 +432,10 @@ class ErrorEstimator(object):
 
             # Hessian weighting term
             istart = nargs//2 if self.metric_type == 'weighted_hessian' else 0
-            H = self.recover_hessian(*args[istart:istart + 2])
+            H = hessian_metric(self.recover_hessian(args[istart+1]))
             if not self.steady:  # Average recovered Hessians
                 iend = istart + nargs//2
-                H += self.recover_hessians(*args[iend-2:iend])
+                H += hessian_metric(self.recover_hessian(args[iend-1]))
                 H *= 0.5
 
             # Combine the two

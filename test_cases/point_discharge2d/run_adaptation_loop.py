@@ -107,7 +107,7 @@ for level in range(num_refinements + 1):
             ee = ErrorEstimator(options, error_estimator='difference_quotient', metric=approach, recovery_method=method)
             uv = solver_obj.fields.uv_2d
             if approach == 'hessian':
-                metric = ee.recover_hessian(uv, tracer_2d)
+                metric = ee.recover_hessian(tracer_2d)
             else:
                 solve_blocks = get_solve_blocks()
                 compute_gradient(qoi, Control(options.tracer['tracer_2d'].diffusivity))

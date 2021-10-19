@@ -94,7 +94,7 @@ for i in range(maxiter):
     uv = solver_obj.fields.uv_2d
     if approach == 'hessian':
         debug("Recovering Hessian")
-        metric = ee.recover_hessian(uv, tracer_2d)
+        metric = ee.recover_hessian(tracer_2d)
     else:
         debug("Solving adjoint problem")
         solve_blocks = get_solve_blocks()

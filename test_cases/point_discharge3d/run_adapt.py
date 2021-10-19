@@ -96,7 +96,7 @@ for i in range(maxiter):
     ee = ErrorEstimator(options, error_estimator='difference_quotient', metric=approach, recovery_method=method)
     uv = solver_obj.fields.uv_3d
     if approach == 'hessian':
-        metric = ee.recover_hessian(uv, tracer_3d)
+        metric = ee.recover_hessian(tracer_3d)
     else:
         solve_blocks = get_solve_blocks()
         with firedrake.PETSc.Log.Event("solve_adjoint"):
