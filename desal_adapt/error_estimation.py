@@ -429,6 +429,7 @@ class ErrorEstimator(object):
                 ee *= R
             elif flux_form:
                 raise ValueError('Flux form is incompatible with weighted Hessian.')
+            ee = firedrake.project(ee, self.P0)
 
             # Hessian weighting term
             istart = nargs//2 if self.metric_type == 'weighted_hessian' else 0
@@ -448,13 +449,9 @@ class ErrorEstimator(object):
                 raise NotImplementedError  # TODO: how do we handle both adjoint solutions? average?
 
             # Interior metric
-            P1_ten = TensorFunctionSpace(self.mesh, "CG", 1)
-            H0 = interpolate(self.recover_hessian('unused', F[0])*g[0], P1_ten)
-            H0 = hessian_metric(H0)
-            H1 = interpolate(self.recover_hessian('unused', F[1])*g[1], P1_ten)
-            H1 = hessian_metric(H1)
-            Hs = interpolate(self.recover_hessian('unused', self.source())*adj, P1_ten)
-            Hs = hessian_metric(Hs)
+            H0 = interpolate(hessian_metric(self.recover_hessian(F[0]))*abs(g[0]), self.P1_ten)
+            H1 = interpolate(hessian_metric(self.recover_hessian(F[1]))*abs(g[1]), self.P1_ten)
+            Hs = interpolate(hessian_metric(self.recover_hessian(self.source()))*abs(adj), self.P1_ten)
             Hint = combine_metrics(H0, H1, Hs, average=kwargs.get('average', False))
 
             # Get tags related to Neumann and natural conditions
