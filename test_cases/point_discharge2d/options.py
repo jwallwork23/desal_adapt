@@ -23,10 +23,13 @@ class PointDischarge2dOptions(PlantOptions):
     domain_length = PositiveFloat(50.0).tag(config=False)
     domain_width = PositiveFloat(10.0).tag(config=False)
 
-    def __init__(self, configuration='aligned', level=0, family='cg', mesh=None, shift=1.0):
+    def __init__(self, configuration='aligned', level=0, source_level=5, pipe_radius=None,
+                 family='cg', mesh=None, shift=1.0):
         """
         :kwarg configuration: choose from 'aligned and 'offset'
         :kwarg level: mesh resolution level
+        :kwarg pipe_radius: optional value for source parametrisation
+        :kwarg source_level: mesh resolution level for calibrated source data
         :kwarg family: choose from 'cg' and 'dg'
         :kwarg mesh: user-provided mesh
         :kwarg shift: number of units to shift the point source to the right
@@ -35,6 +38,7 @@ class PointDischarge2dOptions(PlantOptions):
         super(PointDischarge2dOptions, self).__init__()
         assert configuration in ('aligned', 'offset')
         assert level >= 0
+        assert source_level >= 0
         assert family in ('cg', 'dg')
         assert shift >= 0.0
 
@@ -56,9 +60,17 @@ class PointDischarge2dOptions(PlantOptions):
 
         # Point source parametrisation
         self.source_value = 100.0
-        self.source_x = 1.0 + shift
-        self.source_y = 5.0
-        self.source_r = 0.05606388
+        self.source_x = Constant(1.0 + shift)
+        self.source_y = Constant(5.0)
+        cwd = os.path.dirname(__file__)
+        fname = os.path.join(cwd, 'data', f'calibrated_radius_{source_level}.npy')
+        if pipe_radius is not None:
+            assert pipe_radius > 0.0
+            self.source_r = Constant(pipe_radius)
+        elif os.path.exists(fname):
+            self.source_r = Constant(np.load(fname)[0])
+        else:
+            self.source_r = Constant(0.05606388)
         self.add_tracer_2d('tracer_2d',
                            'Depth averaged tracer',
                            'Tracer2d',
@@ -137,32 +149,28 @@ class PointDischarge2dOptions(PlantOptions):
         dx_qoi = dx(degree=quadrature_degree)
         return assemble(self.qoi_kernel*solution*dx_qoi)
 
+    @property
+    def analytical_solution_expression(self):
+        x, y = SpatialCoordinate(self.mesh2d)
+        x0 = self.source_x
+        y0 = self.source_y
+        r = self.source_r
+        u = self.horizontal_velocity_scale
+        D = self.horizontal_diffusivity_scale
+        Pe = 0.5*u/D
+        q = 1.0
+        rr = max_value(sqrt((x - x0)**2 + (y - y0)**2), r)
+        return 0.5*q/(pi*D)*exp(Pe*(x - x0))*bessk0(Pe*rr)
+
+    @property
     def analytical_solution(self):
         fs = get_functionspace(self.mesh2d, self.tracer_element_family.upper(), 1)
         solution = Function(fs, name='Analytical solution')
-        x, y = SpatialCoordinate(self.mesh2d)
-        x0 = self.source_x
-        y0 = self.source_y
-        r = self.source_r
-        u = self.horizontal_velocity_scale
-        D = self.horizontal_diffusivity_scale
-        Pe = 0.5*u/D
-        q = 1.0
-        rr = max_value(sqrt((x - x0)**2 + (y - y0)**2), r)
-        solution.interpolate(0.5*q/(pi*D)*exp(Pe*(x - x0))*bessk0(Pe*rr))
+        solution.interpolate(self.analytical_solution_expression)
         return solution
 
     def analytical_qoi(self, quadrature_degree=12):
-        x, y = SpatialCoordinate(self.mesh2d)
-        x0 = self.source_x
-        y0 = self.source_y
-        r = self.source_r
-        u = self.horizontal_velocity_scale
-        D = self.horizontal_diffusivity_scale
-        Pe = 0.5*u/D
-        q = 1.0
-        rr = max_value(sqrt((x - x0)**2 + (y - y0)**2), r)
-        solution = 0.5*q/(pi*D)*exp(Pe*(x - x0))*bessk0(Pe*rr)
+        solution = self.analytical_solution_expression
         dx_qoi = dx(degree=quadrature_degree)
         return assemble(self.qoi_kernel*solution*dx_qoi)
 
@@ -177,17 +185,21 @@ if __name__ == '__main__':
     parser.add_argument('-num_refinements', 6, help="""
         Number of mesh refinements (default 6).
         """)
+    parser.add_argument('-quadrature_degree', 12)
     parsed_args = parser.parse_args()
     config = parsed_args.configuration
     num_refinements = parsed_args.num_refinements
     assert num_refinements >= 0
+    degree = parsed_args.quadrature_degree
+    assert degree >= 0
     lines = ''
     cwd = os.path.join(os.path.dirname(__file__))
     output_dir = create_directory(os.path.join(cwd, 'outputs', config, 'fixed_mesh', 'cg1'))
     for level in range(num_refinements+1):
         options = PointDischarge2dOptions(level=level, configuration=config)
         dofs = options.mesh2d.num_vertices()
-        line = f'DoF count {dofs:7d},   analytical QoI = {options.analytical_qoi():.8e}'
+        qoi = options.analytical_qoi(quadrature_degree=degree)
+        line = f'DoF count {dofs:7d},   analytical QoI = {qoi:.8e}'
         print_output(line)
         lines = '\n'.join([lines, line])
         with open(os.path.join(output_dir, 'analytical_qoi.log'), 'w+') as log:
