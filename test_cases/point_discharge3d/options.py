@@ -31,10 +31,13 @@ class PointDischarge3dOptions(PlantOptions):
     domain_length = PositiveFloat(50.0).tag(config=False)
     domain_width = PositiveFloat(10.0).tag(config=False)
 
-    def __init__(self, configuration='aligned', level=0, family='cg', mesh=None, shift=1.0):
+    def __init__(self, configuration='aligned', level=0, pipe_radius=None,
+                 source_level=3, family='cg', mesh=None, shift=1.0):
         """
         :kwarg configuration: choose from 'aligned and 'offset'
         :kwarg level: mesh resolution level
+        :kwarg pipe_radius: optional value for source parametrisation
+        :kwarg source_level: mesh resolution level for calibrated source data
         :kwarg family: choose from 'cg' and 'dg'
         :kwarg mesh: user-provided mesh
         :kwarg shift: number of units to shift the point source to the right
@@ -42,6 +45,7 @@ class PointDischarge3dOptions(PlantOptions):
         super(PointDischarge3dOptions, self).__init__()
         assert configuration in ('aligned', 'offset')
         assert level >= 0
+        assert source_level >= 0
         assert family in ('cg', 'dg')
         assert shift >= 0.0
 
@@ -66,10 +70,18 @@ class PointDischarge3dOptions(PlantOptions):
 
         # Point source parametrisation
         self.source_value = 100.0
-        self.source_x = 1.0 + shift
-        self.source_y = 5.0
-        self.source_z = 5.0
-        self.source_r = 0.0651537538
+        self.source_x = Constant(1.0 + shift)
+        self.source_y = Constant(5.0)
+        self.source_z = Constant(5.0)
+        cwd = os.path.dirname(__file__)
+        fname = os.path.join(cwd, 'data', f'calibrated_radius_{source_level}.npy')
+        if pipe_radius is not None:
+            assert pipe_radius > 0.0
+            self.source_r = Constant(pipe_radius)
+        elif os.path.exists(fname):
+            self.source_r = Constant(np.load(fname)[0])
+        else:
+            self.source_r = Constant(0.0651537538)
         self.add_tracer_3d('tracer_3d',
                            'Depth averaged tracer',
                            'Tracer3d',

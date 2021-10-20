@@ -1,5 +1,9 @@
 all: uniform hessian isotropic_dwr anisotropic_dwr weighted_hessian weighted_gradient plot
 
+calibrate:
+	@python3 calibrate.py
+	@python3 plot_calibration.py
+
 snapshot: snapshot_hessian snapshot_isotropic_dwr snapshot_anisotropic_dwr snapshot_weighted_hessian snapshot_weighted_gradient
 
 snapshot_hessian:
