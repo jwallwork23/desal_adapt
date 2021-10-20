@@ -25,6 +25,9 @@ class Parser(object):
             'level': {'type': int, 'msg': """
                 Resolution level of initial mesh (default {:d}).
                 """},
+            'quadrature_degree': {'type': int, 'msg': """
+                Quadrature degree for QoI evaluation (default {:d}).
+                """},
             'end_time': {'type': float, 'msg': """
                 Simulation end time in seconds (default {:.1f}).
                 """},
