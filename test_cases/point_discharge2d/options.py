@@ -174,13 +174,21 @@ if __name__ == '__main__':
     parser.add_argument('configuration', 'aligned', help="""
         Choose from 'aligned' and 'offset'.
         """)
-    parser.add_argument('-num_refinements', 5, help="""
-        Number of mesh refinements (default 5).
+    parser.add_argument('-num_refinements', 6, help="""
+        Number of mesh refinements (default 6).
         """)
     parsed_args = parser.parse_args()
+    config = parsed_args.configuration
     num_refinements = parsed_args.num_refinements
     assert num_refinements >= 0
+    lines = ''
+    cwd = os.path.join(os.path.dirname(__file__))
+    output_dir = create_directory(os.path.join(cwd, 'outputs', config, 'fixed_mesh', 'cg1'))
     for level in range(num_refinements+1):
-        options = PointDischarge2dOptions(level=level, configuration=parsed_args.configuration)
+        options = PointDischarge2dOptions(level=level, configuration=config)
         dofs = options.mesh2d.num_vertices()
-        print_output(f'DoF count {dofs:7d},   analytical QoI = {options.analytical_qoi():.8e}')
+        line = f'DoF count {dofs:7d},   analytical QoI = {options.analytical_qoi():.8e}'
+        print_output(line)
+        lines = '\n'.join([lines, line])
+        with open(os.path.join(output_dir, 'analytical_qoi.log'), 'w+') as log:
+            log.write(lines)

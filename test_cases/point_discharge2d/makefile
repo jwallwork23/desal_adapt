@@ -102,3 +102,7 @@ profile_weighted_hessian:
 profile_weighted_gradient:
 	@python3 run_adapt.py aligned weighted_gradient -profile 1 -target 8000 -log_view :outputs/aligned/weighted_gradient/cg1/logview.txt:ascii_flamegraph
 	@cd outputs/aligned/weighted_gradient/cg1 && flamegraph.pl --title "Weighted gradient 2D" logview.txt > flamegraph_aligned.svg && rm logview.txt
+
+analytical:
+	@python3 options.py aligned
+	@python3 options.py offset
