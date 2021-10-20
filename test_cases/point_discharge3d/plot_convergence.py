@@ -47,9 +47,9 @@ for tag, label in zip(tags, names):
 # Plot QoI convergence vs DoFs
 fig, axes = plt.subplots()
 if uniform is not None:
-    axes.loglog(uniform['dofs'], uniform['qois'], '--', marker='x', label='Uniform')
+    axes.semilogx(uniform['dofs'], uniform['qois'], '--', marker='x', label='Uniform')
 for data, label, marker in zip(runs, labels, markers):
-    axes.loglog(data['dofs'], data['qois'], '--', marker=marker, label=label)
+    axes.semilogx(data['dofs'], data['qois'], '--', marker=marker, label=label)
 axes.set_xlabel('DoF count')
 axes.set_ylabel('Quantity of interest')
 axes.set_xticks([1.0e+03, 1.0e+04, 1.0e+05, 1.0e+06])
