@@ -5,8 +5,8 @@ import numpy as np
 
 # Parse arguments
 parser = Parser(prog='test_cases/point_discharge2d/plot_calibration.py')
-parser.add_argument('-level', 0, help="""
-    Mesh resolution level (default 0).
+parser.add_argument('-level', 5, help="""
+    Mesh resolution level (default 5).
     """)
 parsed_args = parser.parse_args()
 level = parsed_args.level
