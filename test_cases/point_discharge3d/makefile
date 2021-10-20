@@ -4,6 +4,10 @@ calibrate:
 	@python3 calibrate.py
 	@python3 plot_calibration.py
 
+analytical:
+	@python3 options.py aligned
+	@python3 options.py offset
+
 snapshot: snapshot_hessian snapshot_isotropic_dwr snapshot_anisotropic_dwr snapshot_weighted_hessian snapshot_weighted_gradient
 
 snapshot_hessian:

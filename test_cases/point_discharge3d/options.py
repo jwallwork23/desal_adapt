@@ -201,10 +201,21 @@ if __name__ == '__main__':
     parser.add_argument('-num_refinements', 3, help="""
         Number of mesh refinements (default 3).
         """)
+    parser.add_argument('-quadrature_degree', 12)
     parsed_args = parser.parse_args()
     num_refinements = parsed_args.num_refinements
     assert num_refinements >= 0
+    degree = parsed_args.quadrature_degree
+    assert degree >= 0
+    lines = ''
+    cwd = os.path.join(os.path.dirname(__file__))
+    output_dir = create_directory(os.path.join(cwd, 'outputs', config, 'fixed_mesh', 'cg1'))
     for level in range(num_refinements+1):
         options = PointDischarge3dOptions(level=level, configuration=parsed_args.configuration)
         dofs = options.mesh2d.num_vertices()
-        print_output(f'DoF count {dofs:7d},   analytical QoI = {options.analytical_qoi():.8e}')
+        qoi = options.analytical_qoi(quadrature_degree=degree)
+        line = f'DoF count {dofs:7d},   analytical QoI = {qoi:.8e}'
+        print_output(line)
+        lines = '\n'.join([lines, line])
+        with open(os.path.join(output_dir, 'analytical_qoi.log'), 'w+') as log:
+            log.write(lines)
