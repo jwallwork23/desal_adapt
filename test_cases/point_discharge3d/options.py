@@ -159,34 +159,29 @@ class PointDischarge3dOptions(PlantOptions):
         dx_qoi = dx(degree=quadrature_degree)
         return assemble(self.qoi_kernel*solution*dx_qoi)
 
+    @property
+    def analytical_solution_expression(self):
+        x, y, z = SpatialCoordinate(self.mesh3d)
+        x0 = self.source_x
+        y0 = self.source_y
+        z0 = self.source_z
+        r = self.source_r
+        u = self.horizontal_velocity_scale
+        D = self.horizontal_diffusivity_scale
+        Pe = 0.5*u/D
+        q = 1.0
+        rr = max_value(sqrt((x - x0)**2 + (y - y0)**2 + (z - z0)**2), r)
+        return q/(8*pi*pi*D*rr)*exp(Pe*(x - x0))*exp(-Pe*rr)
+
+    @property
     def analytical_solution(self):
         fs = get_functionspace(self.mesh3d, self.tracer_element_family.upper(), 1)
         solution = Function(fs, name='Analytical solution')
-        x, y, z = SpatialCoordinate(self.mesh3d)
-        x0 = self.source_x
-        y0 = self.source_y
-        z0 = self.source_z
-        r = self.source_r
-        u = self.horizontal_velocity_scale
-        D = self.horizontal_diffusivity_scale
-        Pe = 0.5*u/D
-        q = 1.0
-        rr = max_value(sqrt((x - x0)**2 + (y - y0)**2 + (z - z0)**2), r)
-        solution.interpolate(q/(8*pi*pi*D*rr)*exp(Pe*(x - x0))*exp(-Pe*rr))
+        solution.interpolate(self.analytical_solution_expression)
         return solution
 
     def analytical_qoi(self, quadrature_degree=12):
-        x, y, z = SpatialCoordinate(self.mesh3d)
-        x0 = self.source_x
-        y0 = self.source_y
-        z0 = self.source_z
-        r = self.source_r
-        u = self.horizontal_velocity_scale
-        D = self.horizontal_diffusivity_scale
-        Pe = 0.5*u/D
-        q = 1.0
-        rr = max_value(sqrt((x - x0)**2 + (y - y0)**2 + (z - z0)**2), r)
-        solution = q/(8*pi*pi*D*rr)*exp(Pe*(x - x0))*exp(-Pe*rr)
+        solution = self.analytical_solution_expression
         dx_qoi = dx(degree=quadrature_degree)
         return assemble(self.qoi_kernel*solution*dx_qoi)
 

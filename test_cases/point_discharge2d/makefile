@@ -1,8 +1,8 @@
 all: convergence
 
 calibrate:
-	@python3 calibrate.py
-	@python3 plot_calibration.py
+	@for i in 0 1 2 3 4 5; do python3 calibrate.py $$i; done
+	@for i in 0 1 2 3 4 5; do python3 plot_calibration.py $$i; done
 
 analytical:
 	@python3 options.py aligned

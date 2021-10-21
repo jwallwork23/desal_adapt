@@ -71,6 +71,7 @@ class PointDischarge2dOptions(PlantOptions):
             self.source_r = Constant(np.load(fname)[0])
         else:
             self.source_r = Constant(0.05606388)
+            # self.source_r = Constant(0.05605917)
         self.add_tracer_2d('tracer_2d',
                            'Depth averaged tracer',
                            'Tracer2d',
