@@ -119,7 +119,7 @@ for level in range(num_refinements + 1):
                                        norm_order=p,
                                        flux_form=flux_form)
             if approach not in ('anisotropic_dwr', 'weighted_gradient'):
-                enforce_element_constraints(metric, 1.0e-10, 1.0e+02, 1.0e+12, optimise=True)
+                enforce_element_constraints(metric, 1.0e-30, 1.0e+30, 1.0e+12, optimise=True)
                 space_normalise(metric, target, p)
             enforce_element_constraints(metric, h_min, h_max, a_max, optimise=True)
 
