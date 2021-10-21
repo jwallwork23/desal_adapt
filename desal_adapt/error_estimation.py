@@ -17,7 +17,8 @@ class ErrorEstimator(object):
                  error_estimator='difference_quotient',
                  metric='isotropic_dwr',
                  boundary=True,
-                 recovery_method='L2'):
+                 recovery_method='L2',
+                 mixed_L2=False):
         """
         :args options: :class:`PlantOptions` parameter object.
         :kwarg mesh: the mesh
@@ -26,6 +27,7 @@ class ErrorEstimator(object):
         :kwarg metric: metric type
         :kwarg boundary: should boundary contributions be considered?
         :kwarg recovery_method: choose from 'L2' and 'Clement'
+        :kwarg mixed_L2: should L2 projection solve a mixed system?
         """
         self.options = options
         if mesh is not None:
@@ -70,6 +72,7 @@ class ErrorEstimator(object):
         self.metric_type = metric
         self.boundary = boundary
         self.recovery_method = recovery_method
+        self.mixed_L2 = mixed_L2
 
     def _replace_supg(self, f):
         if self.options.use_supg_tracer:
@@ -292,7 +295,6 @@ class ErrorEstimator(object):
         timestep, given current solution and
         lagged solution.
         """
-        # TODO: Account for boundary conditions
         return self._psi_steady(*args) if self.steady else self._psi_unsteady(*args)
 
     @PETSc.Log.EventDecorator('ErrorEstimator.potential')
@@ -353,7 +355,7 @@ class ErrorEstimator(object):
         """
         if self.metric_type == 'weighted_hessian':
             c = self._replace_supg(c)
-        return hessian_metric(recover_hessian(c, mesh=self.mesh, method=self.recovery_method))
+        return hessian_metric(recover_hessian(c, mesh=self.mesh, method=self.recovery_method, mixed=self.mixed_L2))
 
     @PETSc.Log.EventDecorator('ErrorEstimator.difference_quotient')
     def difference_quotient(self, *args, flux_form=False):
@@ -407,7 +409,9 @@ class ErrorEstimator(object):
                 raise NotImplementedError  # TODO
             return self.recover_hessian(args[1])
         elif self.metric_type == 'isotropic_dwr':
-            return isotropic_metric(self.error_indicator(*args, **kwargs), target_space=self.P1_ten)
+            return isotropic_metric(self.error_indicator(*args, **kwargs),
+                                    target_space=self.P1_ten,
+                                    interpolant=self.recovery_method)
         elif self.metric_type in ('weighted_hessian', 'anisotropic_dwr'):
             flux_form = kwargs.get('flux_form', False)
             kwargs['approach'] = self.metric_type
@@ -440,7 +444,8 @@ class ErrorEstimator(object):
                 H *= 0.5
 
             # Combine the two
-            return anisotropic_metric([ee], [H], target_space=self.P1_ten, **kwargs)
+            return anisotropic_metric([ee], [H], target_space=self.P1_ten,
+                                      interpolant=self.recovery_method, **kwargs)
         elif self.metric_type == 'weighted_gradient':
             F = self.potential(*args[:nargs//2])
             adj = args[nargs//2+1]  # NOTE: Only picks current adjoint solution

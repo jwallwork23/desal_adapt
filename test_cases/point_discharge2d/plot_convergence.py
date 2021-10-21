@@ -5,8 +5,11 @@ import numpy as np
 import pandas as pd
 
 
-def read_csv(approach, space='cg1'):
-    fname = os.path.join(root_dir, approach, space, 'convergence.log')
+def read_csv(approach, space, method='Clement'):
+    fpath = os.path.join(root_dir, approach, space)
+    if approach != 'fixed_mesh':
+        fpath = os.path.join(fpath, method)
+    fname = os.path.join(fpath, 'convergence.log')
     try:
         data = pd.read_csv(fname)
     except FileNotFoundError:
@@ -22,26 +25,30 @@ parser.add_argument('configuration', 'aligned', help="""
     """)
 parser.add_argument('-family', 'cg')
 parser.add_argument('-recovery_method', 'Clement')
+parser.add_argument('-dpi', 500, help="""
+    Dots per inch (default 500).
+    """)
 parsed_args = parser.parse_args()
 config = parsed_args.configuration
 assert config in ['aligned', 'offset']
 family = parsed_args.family
+space = f'{family}1'
 assert family in ['cg', 'dg']
 method = parsed_args.recovery_method
 assert method in ['L2', 'Clement']
+dpi = parsed_args.dpi
 plot_dir = create_directory(os.path.join('plots', config, f'{family}1', method))
-dpi = 500
 
 # Load data
 root_dir = os.path.join('outputs', config)
-uniform = read_csv('fixed_mesh')
+uniform = read_csv('fixed_mesh', space)
 tags = ['hessian', 'isotropic_dwr', 'anisotropic_dwr', 'weighted_hessian', 'weighted_gradient']
 names = ['Hessian-based', 'Isotropic DWR', 'Anisotropic DWR', 'Weighted Hessian', 'Weighted gradient']
 markers = ['*', '^', 'v', 'o', 'h']
 runs = []
 labels = []
 for tag, label in zip(tags, names):
-    data = read_csv(tag)
+    data = read_csv(tag, space, method)
     if data is not None:
         runs.append(data)
         labels.append(label)

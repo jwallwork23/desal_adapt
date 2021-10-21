@@ -22,6 +22,7 @@ parser.add_argument('-num_repetitions', 1, help="""
     """)
 parser.add_argument('-family', 'cg')
 parser.add_argument('-recovery_method', 'Clement')
+parser.add_argument('-mixed_L2', False)
 parser.add_argument('-norm_order', 1.0)
 parser.add_argument('-convergence_rate', 6.0)
 parser.add_argument('-miniter', 3)
@@ -36,6 +37,7 @@ parsed_args = parser.parse_args()
 config = parsed_args.configuration
 family = parsed_args.family
 method = parsed_args.recovery_method
+mixed_L2 = parsed_args.mixed_L2
 num_refinements = parsed_args.num_refinements
 assert num_refinements >= 1
 num_repetitions = parsed_args.num_repetitions
@@ -60,8 +62,9 @@ assert h_max > h_min
 a_max = parsed_args.a_max
 assert a_max > 1.0
 flux_form = parsed_args.flux_form
+method_str = method if method != 'L2' or not mixed_L2 else method + '_mixed'
 cwd = os.path.join(os.path.dirname(__file__))
-output_dir = create_directory(os.path.join(cwd, 'outputs', config, approach, 'cg1'))
+output_dir = create_directory(os.path.join(cwd, 'outputs', config, approach, 'cg1', method_str))
 
 # Loop over mesh refinement levels
 lines = 'qois,dofs,elements,wallclock,iterations\n'

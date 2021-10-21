@@ -22,6 +22,9 @@ class Parser(object):
             'recovery_method': {'type': str, 'msg': """
                 Method for gradient and Hessian recovery (default '{:s}').
                 """},
+            'mixed_L2': {'type': bool, 'msg': """
+                Should L2 projection solve a mixed system? (default {:b}).
+                """},
             'level': {'type': int, 'msg': """
                 Resolution level of initial mesh (default {:d}).
                 """},

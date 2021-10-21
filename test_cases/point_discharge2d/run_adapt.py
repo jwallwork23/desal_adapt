@@ -12,11 +12,10 @@ parser.add_argument('configuration', 'aligned', help="""
     Choose from 'aligned' and 'offset'.
     """)
 parser.add_argument('approach', 'hessian')
-parser.add_argument('-level', 0, help="""
-    Base mesh resolution level (default 0).
-    """)
+parser.add_argument('-level', 0)
 parser.add_argument('-family', 'cg')
 parser.add_argument('-recovery_method', 'Clement')
+parser.add_argument('-mixed_L2', False)
 parser.add_argument('-target', 4000.0)
 parser.add_argument('-norm_order', 1.0)
 parser.add_argument('-convergence_rate', 6.0)
@@ -35,6 +34,7 @@ config = parsed_args.configuration
 level = parsed_args.level
 family = parsed_args.family
 method = parsed_args.recovery_method
+mixed_L2 = parsed_args.mixed_L2
 approach = parsed_args.approach
 target = parsed_args.target
 assert target > 0.0
@@ -60,6 +60,9 @@ flux_form = parsed_args.flux_form
 profile = parsed_args.profile
 if parsed_args.debug:
     set_log_level(DEBUG)
+method_str = method if method != 'L2' or not mixed_L2 else method + '_mixed'
+cwd = os.path.join(os.path.dirname(__file__))
+output_dir = os.path.join(cwd, config, approach, f'{family}1', method_str, f'target{target:.0f}')
 
 # Adapt until mesh convergence is achieved
 mesh = None
@@ -72,7 +75,6 @@ for i in range(maxiter):
     # Setup
     options = PointDischarge2dOptions(level=level, family=family, configuration=config, mesh=mesh)
     mesh = options.mesh2d
-    output_dir = os.path.join(options.output_directory, config, approach, f'{family}1', f'target{target:.0f}')
     options.output_directory = create_directory(output_dir)
     options.no_exports = profile
     solver_obj = PlantSolver2d(options, optimise=profile)
@@ -90,7 +92,8 @@ for i in range(maxiter):
             break
 
     # Construct metric
-    ee = ErrorEstimator(options, error_estimator='difference_quotient', metric=approach, recovery_method=method)
+    ee = ErrorEstimator(options, error_estimator='difference_quotient', metric=approach,
+                        recovery_method=method, mixed_L2=mixed_L2)
     uv = solver_obj.fields.uv_2d
     if approach == 'hessian':
         debug("Recovering Hessian")
@@ -139,5 +142,5 @@ if not profile:
     axes.set_ylim([0, 10])
     plt.tight_layout()
     cwd = os.path.join(os.path.dirname(__file__))
-    plot_dir = os.path.join(cwd, 'plots', config, f'{family}1')
-    plt.savefig(os.path.join(create_directory(plot_dir), f'{approach}_mesh_target{target:.0f}.jpg'), dpi=300)
+    plot_dir = create_directory(os.path.join(cwd, 'plots', config, f'{family}1', method_str))
+    plt.savefig(os.path.join(plot_dir, f'{approach}_mesh_target{target:.0f}.jpg'), dpi=300)
