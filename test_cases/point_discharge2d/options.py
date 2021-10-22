@@ -45,7 +45,7 @@ class PointDischarge2dOptions(PlantOptions):
         # Setup mesh
         self.mesh2d = mesh
         if self.mesh2d is None:
-            self.mesh2d = RectangleMesh(100*2**level, 20*2**level, self.domain_length, self.domain_width)
+            self.mesh2d = RectangleMesh(50*2**level, 10*2**level, self.domain_length, self.domain_width)
         self.setup_mesh(self.mesh2d)
 
         # Physics

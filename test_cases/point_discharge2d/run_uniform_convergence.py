@@ -8,8 +8,8 @@ parser = Parser(prog='test_cases/point_discharge2d/run_uniform_convergence.py')
 parser.add_argument('configuration', 'aligned', help="""
     Choose from 'aligned' and 'offset'.
     """)
-parser.add_argument('-num_refinements', 5, help="""
-    Number of mesh refinements to consider (default 5).
+parser.add_argument('-num_refinements', 6, help="""
+    Number of mesh refinements to consider (default 6).
     """)
 parser.add_argument('-num_repetitions', 1, help="""
     Number of times to repeat the simulation (default 1).

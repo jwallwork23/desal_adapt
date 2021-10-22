@@ -27,10 +27,10 @@ parser.add_argument('-norm_order', 1.0)
 parser.add_argument('-convergence_rate', 6.0)
 parser.add_argument('-miniter', 3)
 parser.add_argument('-maxiter', 35)
-parser.add_argument('-element_rtol', 0.001)
-parser.add_argument('-qoi_rtol', 0.001)
+parser.add_argument('-element_rtol', 0.005)
+parser.add_argument('-qoi_rtol', 0.005)
 parser.add_argument('-h_min', 1.0e-10)
-parser.add_argument('-h_max', 1.0e+02)
+parser.add_argument('-h_max', 1.0e+01)
 parser.add_argument('-a_max', 1.0e+05)
 parser.add_argument('-flux_form', False)
 parsed_args = parser.parse_args()
@@ -67,18 +67,22 @@ cwd = os.path.join(os.path.dirname(__file__))
 output_dir = create_directory(os.path.join(cwd, 'outputs', config, approach, 'cg1', method_str))
 
 # Loop over mesh refinement levels
-lines = 'qois,dofs,elements,wallclock,iterations\n'
+lines = 'qois,dofs,elements,wallclock,iterations,wallclock_metric\n'
 tape = get_working_tape()
 if approach == 'hessian':
     stop_annotating()
 converged_reason = None
 for level in range(num_refinements + 1):
-    target = 250.0*4.0**level
+    target = 350.0*4.0**level
+    if approach == 'anisotropic_dwr':
+        target *= 2.0
     cpu_times = []
+    cpu_times_metric = []
     for rep in range(num_repetitions):
         msg = f'Refinement {level}/{num_refinements}, repetition {rep+1}/{num_repetitions}' \
               + f' ({approach}, {config})'
         print_output('\n'.join(['\n', '*'*len(msg), msg, '*'*len(msg)]))
+        cpu_times_metric.append(0.0)
         cpu_timestamp = perf_counter()
 
         # Adapt until mesh convergence is achieved
@@ -96,7 +100,11 @@ for level in range(num_refinements + 1):
             solver_obj = PlantSolver2d(options, optimise=True)
 
             # Forward solve
-            solver_obj.iterate()
+            try:
+                solver_obj.iterate()
+            except firedrake.ConvergenceError:
+                options.tracer_timestepper_options.solver_parameters = {'pc_factor_mat_solver_type': 'mumps'}
+                solver_obj.iterate()
 
             # Check for QoI convergence
             tracer_2d = solver_obj.fields.tracer_2d
@@ -107,6 +115,7 @@ for level in range(num_refinements + 1):
                     break
 
             # Construct metric
+            cpu_timestamp_metric = perf_counter()
             ee = ErrorEstimator(options, error_estimator='difference_quotient', metric=approach, recovery_method=method)
             uv = solver_obj.fields.uv_2d
             if approach == 'hessian':
@@ -125,6 +134,7 @@ for level in range(num_refinements + 1):
                 enforce_element_constraints(metric, 1.0e-30, 1.0e+30, 1.0e+12, optimise=True)
                 space_normalise(metric, target, p)
             enforce_element_constraints(metric, h_min, h_max, a_max, optimise=True)
+            cpu_times_metric[-1] += perf_counter() - cpu_timestamp_metric
 
             # Adapt mesh and check convergence
             mesh = adapt(mesh, metric)
@@ -152,6 +162,7 @@ for level in range(num_refinements + 1):
         qoi = options.qoi(solver_obj.fields.tracer_2d)
     dofs = solver_obj.function_spaces.Q_2d.dof_count
     wallclock = np.mean(cpu_times)
-    lines += f'{qoi},{dofs},{elements},{wallclock},{i+1}\n'
+    wallclock_metric = np.mean(cpu_times_metric)
+    lines += f'{qoi},{dofs},{elements},{wallclock},{i+1},{wallclock_metric}\n'
     with open(os.path.join(output_dir, 'convergence.log'), 'w+') as log:
         log.write(lines)

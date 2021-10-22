@@ -21,10 +21,10 @@ parser.add_argument('-norm_order', 1.0)
 parser.add_argument('-convergence_rate', 6.0)
 parser.add_argument('-miniter', 3)
 parser.add_argument('-maxiter', 35)
-parser.add_argument('-element_rtol', 0.001)
+parser.add_argument('-element_rtol', 0.005)
 parser.add_argument('-qoi_rtol', 0.001)
 parser.add_argument('-h_min', 1.0e-10)
-parser.add_argument('-h_max', 1.0e+02)
+parser.add_argument('-h_max', 1.0e+01)
 parser.add_argument('-a_max', 1.0e+05)
 parser.add_argument('-flux_form', False)
 parser.add_argument('-profile', False)
@@ -61,8 +61,8 @@ profile = parsed_args.profile
 if parsed_args.debug:
     set_log_level(DEBUG)
 method_str = method if method != 'L2' or not mixed_L2 else method + '_mixed'
-cwd = os.path.join(os.path.dirname(__file__))
-output_dir = os.path.join(cwd, config, approach, f'{family}1', method_str, f'target{target:.0f}')
+cwd = os.path.dirname(__file__)
+output_dir = os.path.join(cwd, 'outputs', config, approach, f'{family}1', method_str, f'target{target:.0f}')
 
 # Adapt until mesh convergence is achieved
 mesh = None
@@ -143,4 +143,4 @@ if not profile:
     plt.tight_layout()
     cwd = os.path.join(os.path.dirname(__file__))
     plot_dir = create_directory(os.path.join(cwd, 'plots', config, f'{family}1', method_str))
-    plt.savefig(os.path.join(plot_dir, f'{approach}_mesh_target{target:.0f}.jpg'), dpi=300)
+    plt.savefig(os.path.join(plot_dir, f'{approach}_mesh_{config}_target{target:.0f}.jpg'), dpi=500)
