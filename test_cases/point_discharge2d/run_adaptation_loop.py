@@ -100,11 +100,7 @@ for level in range(num_refinements + 1):
             solver_obj = PlantSolver2d(options, optimise=True)
 
             # Forward solve
-            try:
-                solver_obj.iterate()
-            except firedrake.ConvergenceError:
-                options.tracer_timestepper_options.solver_parameters = {'pc_factor_mat_solver_type': 'mumps'}
-                solver_obj.iterate()
+            solver_obj.iterate()
 
             # Check for QoI convergence
             tracer_2d = solver_obj.fields.tracer_2d
