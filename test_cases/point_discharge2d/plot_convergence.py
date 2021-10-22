@@ -3,6 +3,7 @@ from desal_adapt.parse import Parser
 from thetis.utility import create_directory
 import numpy as np
 import pandas as pd
+import sys
 
 
 def read_csv(approach, space, method='Clement'):
@@ -62,22 +63,13 @@ for data, label, marker in zip(runs, labels, markers):
 axes.set_xlabel('DoF count')
 axes.set_ylabel('Quantity of interest')
 axes.set_xticks([1.0e+03, 1.0e+04, 1.0e+05, 1.0e+06])
+if config == 'aligned':
+    axes.set_ylim([0.0, 0.2])
+else:
+    axes.set_ylim([0.0, 0.15])
 axes.grid(True)
 plt.tight_layout()
 plt.savefig(os.path.join(plot_dir, f'dofs_vs_qoi_{config}.jpg'), dpi=dpi)
-
-# Plot QoI convergence vs wallclock
-fig, axes = plt.subplots()
-if uniform is not None:
-    axes.semilogx(uniform['wallclock'], uniform['qois'], '--', marker='x', label='Uniform')
-for data, label, marker in zip(runs, labels, markers):
-    axes.semilogx(data['wallclock'], data['qois'], '--', marker=marker, label=label)
-axes.set_xlabel(r'CPU time [$\mathrm s$]')
-axes.set_ylabel('Quantity of interest')
-axes.set_xticks([1.0e+00, 1.0e+01, 1.0e+02, 1.0e+03])
-axes.grid(True)
-plt.tight_layout()
-plt.savefig(os.path.join(plot_dir, f'time_vs_qoi_{config}.jpg'), dpi=dpi)
 if uniform is None:
     print('Cannot plot errors because fixed mesh benchmarks do not exist yet.')
     sys.exit(0)
@@ -96,7 +88,7 @@ for data, label, marker in zip(runs, labels, markers):
 axes.set_xlabel('DoF count')
 axes.set_ylabel(r'Relative QoI error (\%)')
 axes.set_xticks([1.0e+03, 1.0e+04, 1.0e+05])
-axes.set_yticks([0.1, 1, 10, 100])
+axes.set_yticks([0.01, 0.1, 1, 10, 100])
 axes.grid(True)
 plt.tight_layout()
 plt.savefig(os.path.join(plot_dir, f'dofs_vs_qoi_error_{config}.jpg'), dpi=dpi)
@@ -131,7 +123,7 @@ for i, (data, label, marker) in enumerate(zip(runs, labels, markers)):
 axes.set_xlabel(r'CPU time [$\mathrm s$]')
 axes.set_ylabel(r'Relative QoI error (\%)')
 axes.set_xticks([1.0e+00, 1.0e+01, 1.0e+02])
-axes.set_yticks([0.1, 1, 10, 100])
+axes.set_yticks([0.01, 0.1, 1, 10, 100])
 axes.grid(True)
 plt.tight_layout()
 plt.savefig(os.path.join(plot_dir, f'time_vs_qoi_error_{config}.jpg'))
@@ -150,3 +142,25 @@ axes.set_yticks([1.0e+00, 1.0e+01, 1.0e+02, 1.0e+03])
 axes.grid(True)
 plt.tight_layout()
 plt.savefig(os.path.join(plot_dir, f'dofs_vs_time_{config}.jpg'))
+
+# Plot QoI error convergence vs metric wallclock
+fig, axes = plt.subplots()
+for i, (data, label, marker) in enumerate(zip(runs, labels, markers)):
+    axes.loglog(data['wallclock_metric'], data['error'], '--', marker=marker, label=label, color=f'C{i+1}')
+    for dofs, wc, it in zip(data['wallclock_metric'], data['error'], data['iterations']):
+        axes.annotate(it, (dofs, wc), color=f'C{i+1}')
+axes.set_xlabel(r'metric CPU time [$\mathrm s$]')
+axes.set_ylabel(r'Relative QoI error (\%)')
+axes.grid(True)
+plt.tight_layout()
+plt.savefig(os.path.join(plot_dir, f'metric_time_vs_qoi_error_{config}.jpg'))
+
+# Plot QoI error convergence vs metric wallclock
+fig, axes = plt.subplots()
+for i, (data, label, marker) in enumerate(zip(runs, labels, markers)):
+    axes.loglog(data['wallclock_metric']/data['iterations'], data['error'], '--', marker=marker, label=label, color=f'C{i+1}')
+axes.set_xlabel(r'metric CPU time [$\mathrm s$]')
+axes.set_ylabel(r'Relative QoI error (\%)')
+axes.grid(True)
+plt.tight_layout()
+plt.savefig(os.path.join(plot_dir, f'metric_time_per_iteration_vs_qoi_error_{config}.jpg'))
