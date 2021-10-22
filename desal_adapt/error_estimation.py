@@ -18,7 +18,8 @@ class ErrorEstimator(object):
                  metric='isotropic_dwr',
                  boundary=True,
                  recovery_method='L2',
-                 mixed_L2=False):
+                 mixed_L2=False,
+                 weighted_gradient_source=True):
         """
         :args options: :class:`PlantOptions` parameter object.
         :kwarg mesh: the mesh
@@ -28,6 +29,8 @@ class ErrorEstimator(object):
         :kwarg boundary: should boundary contributions be considered?
         :kwarg recovery_method: choose from 'L2' and 'Clement'
         :kwarg mixed_L2: should L2 projection solve a mixed system?
+        :kwarg weighted_gradient_source: include source terms in
+            the weighted gradient metric formulation?
         """
         self.options = options
         if mesh is not None:
@@ -73,6 +76,7 @@ class ErrorEstimator(object):
         self.boundary = boundary
         self.recovery_method = recovery_method
         self.mixed_L2 = mixed_L2
+        self.weighted_gradient_source = weighted_gradient_source
 
     def _replace_supg(self, f):
         if self.options.use_supg_tracer:
@@ -454,10 +458,16 @@ class ErrorEstimator(object):
                 raise NotImplementedError  # TODO: how do we handle both adjoint solutions? average?
 
             # Interior metric
-            H0 = interpolate(hessian_metric(self.recover_hessian(F[0]))*abs(g[0]), self.P1_ten)
-            H1 = interpolate(hessian_metric(self.recover_hessian(F[1]))*abs(g[1]), self.P1_ten)
-            Hs = interpolate(hessian_metric(self.recover_hessian(self.source()))*abs(adj), self.P1_ten)
-            Hint = combine_metrics(H0, H1, Hs, average=kwargs.get('average', False))
+            H0 = hessian_metric(self.recover_hessian(F[0]))
+            H0.interpolate(H0*abs(g[0]))
+            H1 = hessian_metric(self.recover_hessian(F[1]))
+            H1.interpolate(H1*abs(g[1]))
+            interior_metrics = [H0, H1]
+            if self.weighted_gradient_source:
+                Hs = hessian_metric(self.recover_hessian(self.source()))
+                Hs.interpolate(Hs*abs(adj))
+                interior_metrics.append(Hs)
+            Hint = combine_metrics(*interior_metrics, average=kwargs.get('average', False))
 
             # Get tags related to Neumann and natural conditions
             tags = self.mesh.exterior_facets.unique_markers
