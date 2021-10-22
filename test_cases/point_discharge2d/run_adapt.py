@@ -12,7 +12,7 @@ parser.add_argument('configuration', 'aligned', help="""
     Choose from 'aligned' and 'offset'.
     """)
 parser.add_argument('approach', 'hessian')
-parser.add_argument('-level', 0)
+parser.add_argument('-level', 1)
 parser.add_argument('-family', 'cg')
 parser.add_argument('-recovery_method', 'Clement')
 parser.add_argument('-mixed_L2', False)

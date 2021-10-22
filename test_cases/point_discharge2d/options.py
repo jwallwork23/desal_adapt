@@ -23,7 +23,7 @@ class PointDischarge2dOptions(PlantOptions):
     domain_length = PositiveFloat(50.0).tag(config=False)
     domain_width = PositiveFloat(10.0).tag(config=False)
 
-    def __init__(self, configuration='aligned', level=0, source_level=5, pipe_radius=None,
+    def __init__(self, configuration='aligned', level=1, source_level=5, pipe_radius=None,
                  family='cg', mesh=None, shift=1.0):
         """
         :kwarg configuration: choose from 'aligned and 'offset'
