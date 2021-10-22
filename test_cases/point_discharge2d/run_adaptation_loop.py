@@ -118,7 +118,15 @@ for level in range(num_refinements + 1):
                 metric = ee.recover_hessian(tracer_2d)
             else:
                 solve_blocks = get_solve_blocks()
-                compute_gradient(qoi, Control(options.tracer['tracer_2d'].diffusivity))
+                try:
+                    compute_gradient(qoi, Control(options.tracer['tracer_2d'].diffusivity))
+                except firedrake.ConvergenceError:
+                    print_output('Adjoint solve failed to converge with iterative'
+                                 ' solver parameters, trying direct.')
+                    options.tracer_timestepper_options.solver_parameters = {
+                        'pc_mat_solver_type': 'mumps',
+                    }
+                    compute_gradient(qoi, Control(options.tracer['tracer_2d'].diffusivity))
                 adjoint_tracer_2d = solve_blocks[-1].adj_sol
                 with stop_annotating():
                     metric = ee.metric(uv, tracer_2d, uv, adjoint_tracer_2d,
