@@ -484,6 +484,10 @@ class ErrorEstimator(object):
             p = kwargs.get('norm_order')
             C = determine_metric_complexity(Hint, Hbar, target, p)
 
+            # Enforce max/min sizes and anisotropy
+            enforce_element_constraints(Hint, 1.0e-30, 1.0e+30, 1.0e+12, optimise=True)
+            enforce_element_constraints(Hbar, 1.0e-30, 1.0e+30, 1.0e+12, optimise=True)
+
             # Normalise the two metrics
             space_normalise(Hint, target, p, global_factor=C, boundary=False)
             space_normalise(Hbar, target, p, global_factor=C, boundary=True)
