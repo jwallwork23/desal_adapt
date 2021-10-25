@@ -63,27 +63,21 @@ time: time_uniform time_hessian time_isotropic_dwr time_anisotropic_dwr time_wei
 
 time_uniform:
 	@python3 run_uniform_convergence.py aligned -num_repetitions 5
-	@python3 run_uniform_convergence.py offset -num_repetitions 5
 
 time_hessian:
 	@python3 run_adaptation_loop.py aligned hessian -num_repetitions 5
-	@python3 run_adaptation_loop.py offset hessian -num_repetitions 5
 
 time_isotropic_dwr:
 	@python3 run_adaptation_loop.py aligned isotropic_dwr -num_repetitions 5
-	@python3 run_adaptation_loop.py offset isotropic_dwr -num_repetitions 5
 
 time_anisotropic_dwr:
 	@python3 run_adaptation_loop.py aligned anisotropic_dwr -num_repetitions 5
-	@python3 run_adaptation_loop.py offset anisotropic_dwr -num_repetitions 5
 
 time_weighted_hessian:
 	@python3 run_adaptation_loop.py aligned weighted_hessian -num_repetitions 5
-	@python3 run_adaptation_loop.py offset weighted_hessian -num_repetitions 5
 
 time_weighted_gradient:
 	@python3 run_adaptation_loop.py aligned weighted_gradient -num_repetitions 5
-	@python3 run_adaptation_loop.py offset weighted_gradient -num_repetitions 5
 
 profile: profile_fixed profile_hessian profile_isotropic_dwr profile_anisotropic_dwr profile_weighted_hessian profile_weighted_gradient
 
