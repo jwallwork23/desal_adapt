@@ -66,6 +66,9 @@ class PointDischarge3dOptions(PlantOptions):
         self.bathymetry2d = Constant(1.0)  # arbitrary
         self.bnd_conditions = {
             1: {'value': Constant(0.0)},  # inflow
+            2: {},                        # outflow
+            3: {'diff_flux': Constant(0.0)},
+            4: {'diff_flux': Constant(0.0)},
         }
 
         # Point source parametrisation
