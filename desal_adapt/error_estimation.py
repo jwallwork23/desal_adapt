@@ -456,6 +456,8 @@ class ErrorEstimator(object):
             g = self.recover_gradient(adj)
             if not self.steady:
                 raise NotImplementedError  # TODO: how do we handle both adjoint solutions? average?
+            target = kwargs.get('target_complexity')
+            p = kwargs.get('norm_order')
 
             # Interior metric
             H0 = hessian_metric(self.recover_hessian(F[0]))
@@ -467,7 +469,11 @@ class ErrorEstimator(object):
                 Hs = hessian_metric(self.recover_hessian(self.source()))
                 Hs.interpolate(Hs*abs(adj))
                 interior_metrics.append(Hs)
-            Hint = combine_metrics(*interior_metrics, average=kwargs.get('average', False))
+            Hint = combine_metrics(*interior_metrics, average=kwargs.get('average', True))
+            if not kwargs.get('boundary', True):
+                enforce_element_constraints(Hint, 1.0e-30, 1.0e+30, 1.0e+12, optimise=True)
+                space_normalise(Hint, target, p, boundary=False)
+                return Hint
 
             # Get tags related to Neumann and natural conditions
             tags = self.mesh.exterior_facets.unique_markers
@@ -477,12 +483,11 @@ class ErrorEstimator(object):
             # Boundary metric
             Fbar = self.bnd_potential(*args[:nargs//2])
             Hbar = recover_boundary_hessian(Fbar, mesh=self.mesh, target_space=self.P1_ten)
-            Hbar = interpolate(hessian_metric(Hbar)*abs(adj), self.P1_ten)
+            Hbar.interpolate(hessian_metric(Hbar)*abs(adj))
 
             # Adjust target complexity
-            target = kwargs.get('target_complexity')
-            p = kwargs.get('norm_order')
             C = determine_metric_complexity(Hint, Hbar, target, p)
+            print_output(f"Determined metric complexity {C:.4e}")
 
             # Enforce max/min sizes and anisotropy
             enforce_element_constraints(Hint, 1.0e-30, 1.0e+30, 1.0e+12, optimise=True)
