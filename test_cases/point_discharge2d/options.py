@@ -22,6 +22,7 @@ class PointDischarge2dOptions(PlantOptions):
     """
     domain_length = PositiveFloat(50.0).tag(config=False)
     domain_width = PositiveFloat(10.0).tag(config=False)
+    tracer_old = None
 
     def __init__(self, configuration='aligned', level=1, source_level=5, pipe_radius=None,
                  family='cg', mesh=None, shift=1.0):
@@ -102,7 +103,7 @@ class PointDischarge2dOptions(PlantOptions):
         # Solver parameters
         self.tracer_timestepper_options.solver_parameters.update({
             'ksp_converged_reason': None,
-            'ksp_max_it': 20000,
+            'ksp_max_it': 10000,
             'ksp_type': 'gmres',
             'ksp_gmres_restart': 20,
             'pc_type': 'ilu',
@@ -127,7 +128,10 @@ class PointDischarge2dOptions(PlantOptions):
             solver_obj.create_function_spaces()
         uv = Function(solver_obj.function_spaces.U_2d)
         uv.interpolate(as_vector([self.horizontal_velocity_scale.values()[0], 0.0]))
-        solver_obj.assign_initial_conditions(uv=uv)
+        if self.tracer_old is None:
+            solver_obj.assign_initial_conditions(uv=uv)
+        else:
+            solver_obj.assign_initial_conditions(uv=uv, tracer=self.tracer_old)
 
     @property
     def source(self):

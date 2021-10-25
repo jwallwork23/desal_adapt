@@ -73,7 +73,7 @@ if approach == 'hessian':
     stop_annotating()
 converged_reason = None
 for level in range(num_refinements + 1):
-    target = 350.0*4.0**level
+    target = 400.0*4.0**level
     if approach == 'anisotropic_dwr':
         target *= 2.0
     cpu_times = []
@@ -116,6 +116,7 @@ for level in range(num_refinements + 1):
 
             # Check for QoI convergence
             tracer_2d = solver_obj.fields.tracer_2d
+            options.tracer_old = tracer_2d
             qoi = options.qoi(tracer_2d)
             if qoi_old is not None and i > miniter:
                 if np.abs(qoi - qoi_old) < qoi_rtol*np.abs(qoi_old):
@@ -135,7 +136,7 @@ for level in range(num_refinements + 1):
                 except firedrake.ConvergenceError:
                     print_output('Adjoint solve failed to converge with iterative'
                                  ' solver parameters, trying direct.')
-                    options.tracer_timestepper_options.solver_parameters = {
+                    solve_blocks[-1].adj_kwargs['solver_parameters'] = {
                         'pc_mat_solver_type': 'mumps',
                     }
                     compute_gradient(qoi, Control(options.tracer['tracer_2d'].diffusivity))

@@ -96,6 +96,7 @@ for i in range(maxiter):
 
     # Check for QoI convergence
     tracer_2d = solver_obj.fields.tracer_2d
+    options.tracer_old = tracer_2d
     qoi = options.qoi(tracer_2d)
     if qoi_old is not None and i > miniter:
         if np.abs(qoi - qoi_old) < qoi_rtol*np.abs(qoi_old):
@@ -113,7 +114,13 @@ for i in range(maxiter):
         debug("Solving adjoint problem")
         solve_blocks = get_solve_blocks()
         with firedrake.PETSc.Log.Event("solve_adjoint"):
-            compute_gradient(qoi, Control(options.tracer['tracer_2d'].diffusivity))
+            try:
+                compute_gradient(qoi, Control(options.tracer['tracer_2d'].diffusivity))
+            except firedrake.ConvergenceError:
+                solve_blocks[-1].adj_kwargs['solver_parameters'] = {
+                    'pc_mat_solver_type': 'mumps',
+                }
+                compute_gradient(qoi, Control(options.tracer['tracer_2d'].diffusivity))
         adjoint_tracer_2d = solve_blocks[-1].adj_sol
         with stop_annotating():
             debug("Computing metric")
