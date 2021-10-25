@@ -85,6 +85,9 @@ for i in range(maxiter):
 
     # Setup
     options = PointDischarge2dOptions(level=level, family=family, configuration=config, mesh=mesh)
+    options.tracer_timestepper_options.solver_parameters = {
+        'pc_factor_mat_solver_type': 'mumps',
+    }
     mesh = options.mesh2d
     options.output_directory = create_directory(output_dir)
     options.no_exports = profile

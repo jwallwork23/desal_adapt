@@ -106,6 +106,10 @@ for level in range(num_refinements + 1):
 
             # Setup
             options = PointDischarge2dOptions(configuration=config, family=family, mesh=mesh)
+            if approach == 'weighted_gradient':
+                options.tracer_timestepper_options.solver_parameters = {
+                    'pc_factor_mat_solver_type': 'mumps',
+                }
             mesh = options.mesh2d
             options.output_directory = output_dir
             options.fields_to_export = []
