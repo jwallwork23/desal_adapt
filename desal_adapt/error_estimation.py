@@ -470,7 +470,7 @@ class ErrorEstimator(object):
                 Hs.interpolate(Hs*abs(adj))
                 interior_metrics.append(Hs)
             Hint = combine_metrics(*interior_metrics, average=kwargs.get('average', True))
-            if not kwargs.get('boundary', False):
+            if not kwargs.get('boundary', True):
                 enforce_element_constraints(Hint, 1.0e-30, 1.0e+30, 1.0e+12, optimise=True)
                 space_normalise(Hint, target, p, boundary=False)
                 return Hint
@@ -478,7 +478,7 @@ class ErrorEstimator(object):
             # Get tags related to Neumann and natural conditions
             tags = self.mesh.exterior_facets.unique_markers
             bcs = {tag: self.options.bnd_conditions.get(tag) or {} for tag in tags}
-            tags = [tag for tag in tags if 'value' not in bcs[tag]]
+            tags = [tag for tag in tags if 'diff_flux' in bcs[tag]]
 
             # Boundary metric
             Fbar = self.bnd_potential(*args[:nargs//2])
@@ -487,11 +487,11 @@ class ErrorEstimator(object):
 
             # Adjust target complexity
             C = determine_metric_complexity(Hint, Hbar, target, p)
-            print_output(f"Determined metric complexity {C:.4e}")
+            print_output(f"Determined global normalisation factor {C:.4e}")
 
             # Enforce max/min sizes and anisotropy
             enforce_element_constraints(Hint, 1.0e-30, 1.0e+30, 1.0e+12, optimise=True)
-            enforce_element_constraints(Hbar, 1.0e-30, 1.0e+30, 1.0e+12, optimise=True)
+            enforce_element_constraints(Hbar, 1.0e-30, 1.0e+30, 1.0e+12, boundary_tag='on_boundary', optimise=True)
 
             # Normalise the two metrics
             space_normalise(Hint, target, p, global_factor=C, boundary=False)
