@@ -470,7 +470,7 @@ class ErrorEstimator(object):
                 Hs.interpolate(Hs*abs(adj))
                 interior_metrics.append(Hs)
             Hint = combine_metrics(*interior_metrics, average=kwargs.get('average', True))
-            if not kwargs.get('boundary', True):
+            if not kwargs.get('boundary', False):
                 enforce_element_constraints(Hint, 1.0e-30, 1.0e+30, 1.0e+12, optimise=True)
                 space_normalise(Hint, target, p, boundary=False)
                 return Hint
