@@ -114,6 +114,7 @@ class PointDischarge3dOptions(PlantOptions):
             'ksp_type': 'gmres',
             'ksp_gmres_restart': 20,
             'pc_type': 'ilu',
+            'pc_factor_levels': 0,
         })
 
         # I/O
