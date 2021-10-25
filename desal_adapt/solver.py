@@ -109,12 +109,11 @@ class PlantSolver2d(FlowSolver2d):
         try:
             super(PlantSolver2d, self).iterate(**kwargs)
         except firedrake.ConvergenceError:
-            print_output('Forward solve failed to converge with iterative'
-                         ' solver parameters, trying direct.')
-            self.options.tracer_timestepper_options.solver_parameters = {
-                'pc_factor_mat_solver_type': 'mumps'
-            }
-            super(PlantSolver2d, self).iterate(**kwargs)
+            k = self.options.tracer_timestepper_options.solver_parameters['pc_factor_levels']
+            print_output(f'Forward solve failed to converge with ILU({k})'
+                         f' trying ILU({k+1}).')
+            self.options.tracer_timestepper_options.solver_parameters['pc_factor_levels'] += 1
+            self.iterate(**kwargs)
 
 
 class PlantSolver3d(PlantSolver2d):
