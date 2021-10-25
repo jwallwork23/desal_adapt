@@ -72,6 +72,17 @@ tape = get_working_tape()
 for i in range(maxiter):
     tape.clear_tape()
 
+    # Ramp up the target complexity
+    base = 2000.0
+    if i == 0:
+        target_ramp = base
+    elif i == 1:
+        target_ramp = (2*base + target)/3
+    elif i == 2:
+        target_ramp = (base + 2*target)/3
+    else:
+        target_ramp = target
+
     # Setup
     options = PointDischarge2dOptions(level=level, family=family, configuration=config, mesh=mesh)
     mesh = options.mesh2d
@@ -107,14 +118,14 @@ for i in range(maxiter):
         with stop_annotating():
             debug("Computing metric")
             metric = ee.metric(uv, tracer_2d, uv, adjoint_tracer_2d,
-                               target_complexity=target,
+                               target_complexity=target_ramp,
                                convergence_rate=alpha,
                                norm_order=p,
                                flux_form=flux_form)
     with stop_annotating():
         if approach not in ('anisotropic_dwr', 'weighted_gradient'):
             enforce_element_constraints(metric, 1.0e-30, 1.0e+30, 1.0e+12, optimise=profile)
-            space_normalise(metric, target, p)
+            space_normalise(metric, target_ramp, p)
         debug("Enforcing element constraints")
         enforce_element_constraints(metric, h_min, h_max, a_max, optimise=profile)
 

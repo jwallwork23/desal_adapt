@@ -78,6 +78,7 @@ for level in range(num_refinements + 1):
         target *= 2.0
     cpu_times = []
     cpu_times_metric = []
+
     for rep in range(num_repetitions):
         msg = f'Refinement {level}/{num_refinements}, repetition {rep+1}/{num_repetitions}' \
               + f' ({approach}, {config})'
@@ -91,6 +92,17 @@ for level in range(num_refinements + 1):
         elements_old = None
         for i in range(maxiter):
             tape.clear_tape()
+
+            # Ramp up the target complexity
+            base = 2000.0
+            if i == 0:
+                target_ramp = base
+            elif i == 1:
+                target_ramp = (2*base + target)/3
+            elif i == 2:
+                target_ramp = (base + 2*target)/3
+            else:
+                target_ramp = target
 
             # Setup
             options = PointDischarge2dOptions(configuration=config, family=family, mesh=mesh)
@@ -130,13 +142,13 @@ for level in range(num_refinements + 1):
                 adjoint_tracer_2d = solve_blocks[-1].adj_sol
                 with stop_annotating():
                     metric = ee.metric(uv, tracer_2d, uv, adjoint_tracer_2d,
-                                       target_complexity=target,
+                                       target_complexity=target_ramp,
                                        convergence_rate=alpha,
                                        norm_order=p,
                                        flux_form=flux_form)
             if approach not in ('anisotropic_dwr', 'weighted_gradient'):
                 enforce_element_constraints(metric, 1.0e-30, 1.0e+30, 1.0e+12, optimise=True)
-                space_normalise(metric, target, p)
+                space_normalise(metric, target_ramp, p)
             enforce_element_constraints(metric, h_min, h_max, a_max, optimise=True)
             cpu_times_metric[-1] += perf_counter() - cpu_timestamp_metric
 
