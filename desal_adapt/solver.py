@@ -15,11 +15,14 @@ class PlantSolver2d(FlowSolver2d):
     with more attributes than expected.
     """
     @PETSc.Log.EventDecorator('PlantSolver2d.__init__')
-    def __init__(self, options, mesh=None, optimise=False):
+    def __init__(self, options, mesh=None, optimise=False, i_export=0, t_start=0.0, compute_salinity=False):
         """
         :arg options: :class:`PlantOptions` parameter object
         :kwarg mesh: :class:`MeshGeometry` upon which to solve
         :kwarg optimise: is this a timed run?
+        :kwarg i_export: export iteration
+        :kwarg t_start: start time of the simulation
+        :kwarg compute_salinity: add a callback for inlet salinity?
         """
         debug("Initialising solver")
         self._initialized = False
@@ -48,8 +51,11 @@ class PlantSolver2d(FlowSolver2d):
         self.solve_tracer = False
         self._isfrozen = True
 
-        self.initialize()
+        self.create_function_spaces()
+        self.create_equations()
         options.apply_boundary_conditions(self)
+        self.create_timestepper()
+        self.create_exporters(i_export=i_export, t_start=t_start, compute_salinity=compute_salinity)
         options.apply_initial_conditions(self)
 
     @PETSc.Log.EventDecorator("PlantSolver2d.create_function_spaces")
@@ -73,6 +79,23 @@ class PlantSolver2d(FlowSolver2d):
         self.options.test_function = self.equations.tracer_2d.test
         self.options.cell_size = self.equations.tracer_2d.cellsize
         self.options._isfrozen = True
+
+    def create_exporters(self, i_export=0, t_start=0.0, compute_salinity=False):
+        debug("Creating exporters")
+        super(PlantSolver2d, self).create_exporters()
+        self.i_export = i_export
+        self.next_export_t = i_export*self.options.simulation_export_time
+        self.iteration = int(np.ceil(self.next_export_t/self.options.timestep))
+        self.simulation_time = t_start
+        self.export_initial_state = False
+        if not self.options.no_exports:
+            self.exporters['vtk'].set_next_export_ix(i_export)
+
+        # # Callback which writes inlet salinity to HDF5  # TODO
+        # if compute_salinity:
+        #     cb = InletSalinityCallback(solver_obj)
+        #     cb._create_new_file = i_export == 0
+        #     solver_obj.add_callback(cb, 'timestep')
 
     def create_timestepper(self):
         debug("Creating timestepper")
