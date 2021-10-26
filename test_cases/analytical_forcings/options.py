@@ -27,6 +27,7 @@ class AnalyticalForcingsOptions(PlantOptions):
         assert configuration in ('aligned', 'offset')
         assert level >= 0
         assert family in ('cg', 'dg')
+        self.qoi_value = 0
 
         # Setup mesh
         if kwargs.get('meshgen', False):
@@ -98,7 +99,7 @@ class AnalyticalForcingsOptions(PlantOptions):
             # 'ksp_converged_reason': None,
             'ksp_max_it': 10000,
             'ksp_type': 'gmres',
-            'pc_type': 'bjacobi',
+            'pc_type': 'ilu',
         })
 
         # I/O
@@ -126,6 +127,8 @@ class AnalyticalForcingsOptions(PlantOptions):
         """
         Get a function for updating the tidal forcing.
         """
+        sol = solver_obj.fields.tracer_2d
+
         def update_forcings(t):
             self.tc.assign(t)
             solver_obj.fields.uv_2d.interpolate(self.forced_velocity)
