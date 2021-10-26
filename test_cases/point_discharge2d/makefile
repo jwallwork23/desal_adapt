@@ -82,25 +82,37 @@ time_weighted_gradient:
 profile: profile_fixed profile_hessian profile_isotropic_dwr profile_anisotropic_dwr profile_weighted_hessian profile_weighted_gradient
 
 profile_fixed:
-	@python3 run_fixed_mesh.py aligned -profile 1 -log_view :outputs/aligned/fixed_mesh/cg1/logview.txt:ascii_flamegraph
-	@cd outputs/aligned/fixed_mesh/cg1 && flamegraph.pl --title "Fixed mesh 2D" logview.txt > flamegraph_aligned.svg && rm logview.txt
+	@python3 run_fixed_mesh.py aligned -level 0 -profile 1 -log_view :outputs/aligned/fixed_mesh/cg1/logview.txt:ascii_flamegraph
+	@cd outputs/aligned/fixed_mesh/cg1 && flamegraph.pl --title "Fixed mesh 2D" logview.txt > flamegraph_coarse.svg && rm logview.txt
+	@python3 run_fixed_mesh.py aligned -level 4 -profile 1 -log_view :outputs/aligned/fixed_mesh/cg1/logview.txt:ascii_flamegraph
+	@cd outputs/aligned/fixed_mesh/cg1 && flamegraph.pl --title "Fixed mesh 2D" logview.txt > flamegraph_fine.svg && rm logview.txt
 
 profile_hessian:
-	@python3 run_adapt.py aligned hessian -profile 1 -target 8000 -log_view :outputs/aligned/hessian/cg1/logview.txt:ascii_flamegraph
-	@cd outputs/aligned/hessian/cg1 && flamegraph.pl --title "Hessian-based 2D" logview.txt > flamegraph_aligned.svg && rm logview.txt
+	@python3 run_adapt.py aligned hessian -target 400 -profile 1 -log_view :outputs/aligned/hessian/cg1/logview.txt:ascii_flamegraph
+	@cd outputs/aligned/hessian/cg1 && flamegraph.pl --title "Hessian-based 2D" logview.txt > flamegraph_coarse.svg && rm logview.txt
+	@python3 run_adapt.py aligned hessian -target 102400 -profile 1 -log_view :outputs/aligned/hessian/cg1/logview.txt:ascii_flamegraph
+	@cd outputs/aligned/hessian/cg1 && flamegraph.pl --title "Hessian-based 2D" logview.txt > flamegraph_fine.svg && rm logview.txt
 
 profile_isotropic_dwr:
-	@python3 run_adapt.py aligned isotropic_dwr -profile 1 -target 8000 -log_view :outputs/aligned/isotropic_dwr/cg1/logview.txt:ascii_flamegraph
-	@cd outputs/aligned/isotropic_dwr/cg1 && flamegraph.pl --title "Isotropic DWR 2D" logview.txt > flamegraph_aligned.svg && rm logview.txt
+	@python3 run_adapt.py aligned isotropic_dwr -target 400 -profile 1 -log_view :outputs/aligned/isotropic_dwr/cg1/logview.txt:ascii_flamegraph
+	@cd outputs/aligned/isotropic_dwr/cg1 && flamegraph.pl --title "Isotropic DWR 2D" logview.txt > flamegraph_coarse.svg && rm logview.txt
+	@python3 run_adapt.py aligned isotropic_dwr -target 102400 -profile 1 -log_view :outputs/aligned/isotropic_dwr/cg1/logview.txt:ascii_flamegraph
+	@cd outputs/aligned/isotropic_dwr/cg1 && flamegraph.pl --title "Isotropic DWR 2D" logview.txt > flamegraph_fine.svg && rm logview.txt
 
 profile_anisotropic_dwr:
-	@python3 run_adapt.py aligned anisotropic_dwr -profile 1 -target 16000 -log_view :outputs/aligned/anisotropic_dwr/cg1/logview.txt:ascii_flamegraph
-	@cd outputs/aligned/anisotropic_dwr/cg1 && flamegraph.pl --title "Anisotropic DWR 2D" logview.txt > flamegraph_aligned.svg && rm logview.txt
+	@python3 run_adapt.py aligned anisotropic_dwr -target 800 -profile 1 -log_view :outputs/aligned/anisotropic_dwr/cg1/logview.txt:ascii_flamegraph
+	@cd outputs/aligned/anisotropic_dwr/cg1 && flamegraph.pl --title "Anisotropic DWR 2D" logview.txt > flamegraph_coarse.svg && rm logview.txt
+	@python3 run_adapt.py aligned anisotropic_dwr -target 204800 -profile 1 -log_view :outputs/aligned/anisotropic_dwr/cg1/logview.txt:ascii_flamegraph
+	@cd outputs/aligned/anisotropic_dwr/cg1 && flamegraph.pl --title "Anisotropic DWR 2D" logview.txt > flamegraph_fine.svg && rm logview.txt
 
 profile_weighted_hessian:
-	@python3 run_adapt.py aligned weighted_hessian -profile 1 -target 6000 -log_view :outputs/aligned/weighted_hessian/cg1/logview.txt:ascii_flamegraph
-	@cd outputs/aligned/weighted_hessian/cg1 && flamegraph.pl --title "Weighted Hessian 2D" logview.txt > flamegraph_aligned.svg && rm logview.txt
+	@python3 run_adapt.py aligned weighted_hessian -target 400 -profile 1 -log_view :outputs/aligned/weighted_hessian/cg1/logview.txt:ascii_flamegraph
+	@cd outputs/aligned/weighted_hessian/cg1 && flamegraph.pl --title "Weighted Hessian 2D" logview.txt > flamegraph_coarse.svg && rm logview.txt
+	@python3 run_adapt.py aligned weighted_hessian -target 102400 -profile 1 -log_view :outputs/aligned/weighted_hessian/cg1/logview.txt:ascii_flamegraph
+	@cd outputs/aligned/weighted_hessian/cg1 && flamegraph.pl --title "Weighted Hessian 2D" logview.txt > flamegraph_fine.svg && rm logview.txt
 
 profile_weighted_gradient:
-	@python3 run_adapt.py aligned weighted_gradient -profile 1 -target 8000 -log_view :outputs/aligned/weighted_gradient/cg1/logview.txt:ascii_flamegraph
-	@cd outputs/aligned/weighted_gradient/cg1 && flamegraph.pl --title "Weighted gradient 2D" logview.txt > flamegraph_aligned.svg && rm logview.txt
+	@python3 run_adapt.py aligned weighted_gradient -target 400 -profile 1 -log_view :outputs/aligned/weighted_gradient/cg1/logview.txt:ascii_flamegraph
+	@cd outputs/aligned/weighted_gradient/cg1 && flamegraph.pl --title "Weighted gradient 2D" logview.txt > flamegraph_coarse.svg && rm logview.txt
+	@python3 run_adapt.py aligned weighted_gradient -target 102400 -profile 1 -log_view :outputs/aligned/weighted_gradient/cg1/logview.txt:ascii_flamegraph
+	@cd outputs/aligned/weighted_gradient/cg1 && flamegraph.pl --title "Weighted gradient 2D" logview.txt > flamegraph_fine.svg && rm logview.txt
