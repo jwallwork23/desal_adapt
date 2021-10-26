@@ -4,6 +4,7 @@ plots/
 __pycache__/
 
 *.egg-info
+*.geo
 *.jpg
 *.msh
 *.pdf
