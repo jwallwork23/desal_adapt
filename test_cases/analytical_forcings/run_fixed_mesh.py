@@ -1,7 +1,7 @@
 from desal_adapt.parse import Parser
 from desal_adapt.solver import PlantSolver2d
 from options import AnalyticalForcingsOptions
-from thetis import create_directory, print_output
+from thetis import create_directory, print_output, assemble, dx
 import os
 from time import perf_counter
 from pyadjoint import pause_annotation
@@ -37,12 +37,18 @@ options.fields_to_export = [] if parsed_args.no_exports else ['tracer_2d']
 # Setup solver
 solver_obj = PlantSolver2d(options)
 uf = options.get_update_forcings(solver_obj)
+
+# Setup QoI
 sol = solver_obj.fields.tracer_2d
+kernel = options.qoi_kernel
+bg = options.background_salinity
 
 
 def update_forcings(t):
     uf(t)
-    options.qoi_value += options.qoi(sol)
+    current_qoi = assemble(kernel*(sol - bg)*dx)
+    print_output(f'inlet salinity increase {current_qoi:.4e}')
+    options.qoi_value += current_qoi
 
 
 # Solve

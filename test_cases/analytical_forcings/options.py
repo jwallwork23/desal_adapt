@@ -1,5 +1,5 @@
 from thetis import *
-from thetis.configuration import PositiveFloat
+from thetis.configuration import PositiveFloat, FiredrakeScalarExpression
 from desal_adapt.options import PlantOptions
 
 
@@ -15,7 +15,7 @@ class AnalyticalForcingsOptions(PlantOptions):
     resource_dir = create_directory(os.path.join(os.path.dirname(__file__), 'resources'))
     domain_length = PositiveFloat(3000.0).tag(config=False)
     domain_width = PositiveFloat(1000.0).tag(config=False)
-    background_salinity = PositiveFloat(39.0).tag(config=True)
+    background_salinity = FiredrakeScalarExpression(Constant(39.0)).tag(config=True)
 
     def __init__(self, configuration='aligned', level=0, family='cg', mesh=None, **kwargs):
         """
@@ -109,9 +109,10 @@ class AnalyticalForcingsOptions(PlantOptions):
 
         self._isfrozen = True
 
+    def get_bnd_conditions(self, fs):
+        return self.bnd_conditions
+
     def apply_boundary_conditions(self, solver_obj):
-        if len(solver_obj.function_spaces.keys()) == 0:
-            solver_obj.create_function_spaces()
         solver_obj.bnd_functions['tracer'] = self.bnd_conditions
 
     def apply_initial_conditions(self, solver_obj):
@@ -138,4 +139,4 @@ class AnalyticalForcingsOptions(PlantOptions):
 
     def qoi(self, solution, quadrature_degree=12):
         dx_qoi = dx(degree=quadrature_degree)
-        return assemble(self.qoi_kernel*solution*dx_qoi)
+        return assemble(self.qoi_kernel*(solution - self.background_salinity)*dx_qoi)

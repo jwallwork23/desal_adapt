@@ -84,6 +84,9 @@ class Parser(object):
             'load_index': {'type': int, 'msg': """
                 Index for loading mesh and metric data from file (default {:d}).
                 """},
+            'no_exports': {'type': bool, 'msg': """
+                Turn all exports off? (default {:b})
+                """},
             'profile': {'type': bool, 'msg': """
                 Is this a profiling or timed run? (default {:b})
                 """},
