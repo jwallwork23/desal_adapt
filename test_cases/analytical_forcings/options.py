@@ -1,5 +1,6 @@
-from desal_adapt import *
+from thetis import *
 from thetis.configuration import PositiveFloat
+from desal_adapt.options import PlantOptions
 
 
 __all__ = ["AnalyticalForcingOptions"]
