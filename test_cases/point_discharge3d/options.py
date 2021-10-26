@@ -1,5 +1,5 @@
 from desal_adapt import *
-from thetis.configuration import PositiveFloat
+from thetis.configuration import PositiveFloat, FiredrakeScalarExpression
 import numpy as np
 
 
@@ -30,6 +30,7 @@ class PointDischarge3dOptions(PlantOptions):
     """
     domain_length = PositiveFloat(50.0).tag(config=False)
     domain_width = PositiveFloat(10.0).tag(config=False)
+    tracer_old = FiredrakeScalarExpression(None, allow_none=True).tag(config=True)
 
     def __init__(self, configuration='aligned', level=0, pipe_radius=None,
                  source_level=3, family='cg', mesh=None, shift=1.0):

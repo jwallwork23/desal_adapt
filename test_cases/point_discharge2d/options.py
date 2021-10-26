@@ -1,6 +1,6 @@
 from desal_adapt import *
 from pyroteus.math import bessk0
-from thetis.configuration import PositiveFloat
+from thetis.configuration import PositiveFloat, FiredrakeScalarExpression
 import numpy as np
 
 
@@ -22,7 +22,7 @@ class PointDischarge2dOptions(PlantOptions):
     """
     domain_length = PositiveFloat(50.0).tag(config=False)
     domain_width = PositiveFloat(10.0).tag(config=False)
-    tracer_old = None
+    tracer_old = FiredrakeScalarExpression(None, allow_none=True).tag(config=True)
 
     def __init__(self, configuration='aligned', level=1, source_level=5, pipe_radius=None,
                  family='cg', mesh=None, shift=1.0):
