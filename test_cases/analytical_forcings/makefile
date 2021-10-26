@@ -9,19 +9,19 @@ fixed_mesh:
 
 # TODO: drop exports, etc.
 isotropic_dwr:
-	@for target in 1000 4000 16000 64000 512000; do for config in aligned offset; do python3 run_adapt $$config isotropic_dwr -target $$target; done; done
+	@for target in 1000 4000 16000 64000 512000; do for config in aligned offset; do python3 run_adapt.py $$config isotropic_dwr -target $$target; done; done
 
 # TODO: drop exports, etc.
 anisotropic_dwr:
-	@for target in 1000 4000 16000 64000 512000; do for config in aligned offset; do python3 run_adapt $$config anisotropic_dwr -target $$target; done; done
+	@for target in 1000 4000 16000 64000 512000; do for config in aligned offset; do python3 run_adapt.py $$config anisotropic_dwr -target $$target; done; done
 
 # TODO: drop exports, etc.
 weighted_hessian:
-	@for target in 1000 4000 16000 64000 512000; do for config in aligned offset; do python3 run_adapt $$config weighted_hessian -target $$target; done; done
+	@for target in 1000 4000 16000 64000 512000; do for config in aligned offset; do python3 run_adapt.py $$config weighted_hessian -target $$target; done; done
 
 # TODO: drop exports, etc.
 weighted_gradient:
-	@for target in 1000 4000 16000 64000 512000; do for config in aligned offset; do python3 run_adapt $$config weighted_gradient -target $$target; done; done
+	@for target in 1000 4000 16000 64000 512000; do for config in aligned offset; do python3 run_adapt.py $$config weighted_gradient -target $$target; done; done
 
 clean:
 	@rm -rf outputs/aligned/isotropic_dwr/cg1/level0/*.h5
