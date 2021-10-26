@@ -8,11 +8,11 @@ parser = Parser(prog='test_cases/analytical_forcings/run_adapt.py')
 parser.add_argument('configuration', 'aligned', help="""
     Choose from 'aligned' and 'offset'.
     """)
+parser.add_argument('approach', 'isotropic_dwr')
 parser.add_argument('-level', 0, help="""
     Mesh resolution level inside the refined region.
     Choose a value from [0, 1, 2, 3, 4, 5] (default 0).""")
 parser.add_argument('-family', 'cg')
-parser.add_argument('-approach', 'isotropic_dwr')
 parser.add_argument('-num_tidal_cycles', 2.0)
 parser.add_argument('-num_meshes', 40)
 parser.add_argument('-target', 4000.0)
@@ -47,4 +47,7 @@ options.fields_to_export = ['tracer_2d']
 
 # Setup solver
 desal_plant = GoalOrientedDesalinationPlant(options, output_dir, num_subintervals)
-desal_plant.fixed_point_iteration(**parsed_args)
+conv = desal_plant.fixed_point_iteration(**parsed_args)
+print(conv)
+with open(os.path.join(output_dir, 'qoi.log'), 'w+') as f:
+    f.write(conv)

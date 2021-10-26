@@ -2,6 +2,7 @@ from desal_adapt import *
 from desal_adapt.error_estimation import ErrorEstimator
 import pyadjoint
 from thetis import print_output, get_functionspace
+from time import perf_counter
 
 
 __all__ = ["GoalOrientedDesalinationPlant"]
@@ -145,6 +146,7 @@ class GoalOrientedDesalinationPlant(GoalOrientedMeshSeq):
         fixed point iteration loop for a desalination outfall
         modelling problem.
         """
+        cpu_timestamp = perf_counter()
         parsed_args = AttrDict(parsed_args)
         options = self.options
         expected = {'miniter', 'maxiter', 'load_index', 'qoi_rtol', 'element_rtol',
@@ -369,6 +371,9 @@ class GoalOrientedDesalinationPlant(GoalOrientedMeshSeq):
             fp_iteration += 1
 
         # Log convergence reason
-        with open(os.path.join(output_dir, 'log'), 'a+') as f:
-            f.write(f"Converged in {fp_iteration+1} iterations due to {converged_reason}\n"
-                    f"QoI = {self.J:.8e}")
+        cpu_time = perf_counter() - cpu_timestamp
+        return '\n'.join([
+            f'Converged in {fp_iteration+1} iterations due to {converged_reason}',
+            f'QoI = {self.J:.8e}',
+            f'CPU time = {cpu_time:.1f} seconds', ''
+        ])
