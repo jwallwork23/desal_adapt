@@ -268,6 +268,7 @@ class GoalOrientedDesalinationPlant(GoalOrientedMeshSeq):
                 with pyadjoint.stop_annotating():
                     print_output(f"\n--- Error estimation {fp_iteration}\n")
                     for i, mesh in enumerate(self.meshes):
+                        print_output(f"Constructing metric {i+1}...")
                         options.rebuild_mesh_dependent_components(mesh)
                         options.get_bnd_conditions(self.function_spaces.tracer_2d[i])
 
@@ -369,4 +370,5 @@ class GoalOrientedDesalinationPlant(GoalOrientedMeshSeq):
 
         # Log convergence reason
         with open(os.path.join(output_dir, 'log'), 'a+') as f:
-            f.write(f"Converged in {fp_iteration+1} iterations due to {converged_reason}")
+            f.write(f"Converged in {fp_iteration+1} iterations due to {converged_reason}\n"
+                    f"QoI = {self.J:.8e}")

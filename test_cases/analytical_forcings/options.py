@@ -16,6 +16,7 @@ class AnalyticalForcingsOptions(PlantOptions):
     domain_length = PositiveFloat(3000.0).tag(config=False)
     domain_width = PositiveFloat(1000.0).tag(config=False)
     background_salinity = FiredrakeScalarExpression(Constant(39.0)).tag(config=True)
+    tracer_old = FiredrakeScalarExpression(None, allow_none=True).tag(config=True)
 
     def __init__(self, configuration='aligned', level=0, family='cg', mesh=None, **kwargs):
         """
@@ -97,7 +98,6 @@ class AnalyticalForcingsOptions(PlantOptions):
 
         # Solver parameters
         self.tracer_timestepper_options.solver_parameters.update({
-            # 'ksp_converged_reason': None,
             'ksp_max_it': 10000,
             'ksp_type': 'gmres',
             'pc_type': 'ilu',
@@ -121,16 +121,17 @@ class AnalyticalForcingsOptions(PlantOptions):
         self.tc.assign(0.0)
         uv = Function(solver_obj.function_spaces.U_2d)
         uv.interpolate(self.forced_velocity)
-        tracer = Function(solver_obj.function_spaces.Q_2d)
-        tracer.assign(self.background_salinity)
-        solver_obj.assign_initial_conditions(uv=uv, tracer=tracer)
+        if self.tracer_old is None:
+            tracer = Function(solver_obj.function_spaces.Q_2d)
+            tracer.assign(self.background_salinity)
+            solver_obj.assign_initial_conditions(uv=uv, tracer=tracer)
+        else:
+            solver_obj.assign_initial_conditions(uv=uv, tracer=self.tracer_old)
 
     def get_update_forcings(self, solver_obj):
         """
         Get a function for updating the tidal forcing.
         """
-        sol = solver_obj.fields.tracer_2d
-
         def update_forcings(t):
             self.tc.assign(t)
             solver_obj.fields.uv_2d.interpolate(self.forced_velocity)
@@ -140,3 +141,33 @@ class AnalyticalForcingsOptions(PlantOptions):
     def qoi(self, solution, quadrature_degree=12):
         dx_qoi = dx(degree=quadrature_degree)
         return assemble(self.qoi_kernel*(solution - self.background_salinity)*dx_qoi)
+
+    def rebuild_mesh_dependent_components(self, mesh):
+        self.mesh2d = mesh
+        if 'tracer_2d' in field_metadata:
+            field_metadata.pop('tracer_2d')
+        if 'tracer_2d' in self.tracer:
+            self.tracer.pop('tracer_2d')
+
+        # Outlet parametrisation
+        self.outlet_value = 2.0  # Discharge rate
+        outlet_x = 0.0
+        outlet_y = 100.0
+        outlet_r = 25.0
+        x, y = SpatialCoordinate(self.mesh2d)
+        self.source = self.outlet_value*exp(-((x - outlet_x)**2 + (y - outlet_y)**2)/outlet_r**2)
+        self.add_tracer_2d('tracer_2d',
+                           'Depth averaged salinity',
+                           'Salinity2d',
+                           shortname='Salinity',
+                           diffusivity=self.horizontal_diffusivity_scale,
+                           source=self.source)
+
+        # Inlet parametrisation
+        inlet_x = 0.0 if configuration == 'aligned' else 400.0
+        inlet_y = -100.0
+        inlet_r = 25.0
+        ball = conditional((x - inlet_x)**2 + (y - inlet_y)**2 < inlet_r**2, 1, 0)
+        area = assemble(ball*dx)
+        scaling = 1.0 if np.isclose(area, 0.0) else pi*inlet_r**2/area
+        self.qoi_kernel = scaling*ball
