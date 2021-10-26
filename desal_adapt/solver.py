@@ -87,7 +87,7 @@ class PlantSolver2d(FlowSolver2d):
         self.next_export_t = i_export*self.options.simulation_export_time
         self.iteration = int(np.ceil(self.next_export_t/self.options.timestep))
         self.simulation_time = t_start
-        self.export_initial_state = False
+        self.export_initial_state = True
         if not self.options.no_exports:
             self.exporters['vtk'].set_next_export_ix(i_export)
 

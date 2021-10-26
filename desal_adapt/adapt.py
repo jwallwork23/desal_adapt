@@ -313,7 +313,7 @@ class GoalOrientedDesalinationPlant(GoalOrientedMeshSeq):
 
                     # Store metrics
                     for i, metric in enumerate(metrics):
-                        print_output(f"\n--- Storing metric data on mesh {i+1}\n")
+                        print_output(f"Storing metric data on mesh {i+1}...")
                         metric_fname = os.path.join(output_dir, f'metric{i}_fp{fp_iteration}')
                         with DumbCheckpoint(metric_fname, mode=FILE_CREATE) as chk:
                             chk.store(metric, name="Metric")

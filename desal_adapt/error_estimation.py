@@ -452,10 +452,14 @@ class ErrorEstimator(object):
                                       interpolant=self.recovery_method, **kwargs)
         elif self.metric_type == 'weighted_gradient':
             F = self.potential(*args[:nargs//2])
-            adj = args[nargs//2+1]  # NOTE: Only picks current adjoint solution
+            adj = args[nargs//2+1]  # Current adjoint solution
             g = self.recover_gradient(adj)
             if not self.steady:
-                raise NotImplementedError  # TODO: how do we handle both adjoint solutions? average?
+                adj_next = args[nargs//2+3]
+                adj += adj_next
+                adj *= 0.5
+                g += self.recover_gradient(adj_next)
+                g *= 0.5
             target = kwargs.get('target_complexity')
             p = kwargs.get('norm_order')
 
@@ -465,7 +469,7 @@ class ErrorEstimator(object):
             H1 = hessian_metric(self.recover_hessian(F[1]))
             H1.interpolate(H1*abs(g[1]))
             interior_metrics = [H0, H1]
-            if self.weighted_gradient_source:
+            if self.weighted_gradient_source:  # NOTE: only currently works for constant sources
                 Hs = hessian_metric(self.recover_hessian(self.source()))
                 Hs.interpolate(Hs*abs(adj))
                 interior_metrics.append(Hs)
