@@ -24,8 +24,14 @@ weighted_gradient:
 	@for target in 1000 4000 16000 64000 512000; do for config in aligned offset; do python3 run_adapt $$config weighted_gradient -target $$target; done; done
 
 clean:
-	@rm outputs/aligned/isotropic_dwr/cg1/level0/*.h5
-	@rm outputs/offset/isotropic_dwr/cg1/level0/*.h5
+	@rm -rf outputs/aligned/isotropic_dwr/cg1/level0/*.h5
+	@rm -rf outputs/offset/isotropic_dwr/cg1/level0/*.h5
+	@rm -rf outputs/aligned/anisotropic_dwr/cg1/level0/*.h5
+	@rm -rf outputs/offset/anisotropic_dwr/cg1/level0/*.h5
+	@rm -rf outputs/aligned/weighted_hessian/cg1/level0/*.h5
+	@rm -rf outputs/offset/weighted_hessian/cg1/level0/*.h5
+	@rm -rf outputs/aligned/weighted_gradient/cg1/level0/*.h5
+	@rm -rf outputs/offset/weighted_gradient/cg1/level0/*.h5
 
 plot:
 	@python3 plot_convergence.py aligned

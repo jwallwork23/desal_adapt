@@ -52,7 +52,9 @@ class AnalyticalForcingsOptions(PlantOptions):
         self.horizontal_diffusivity_scale = D
         self.bathymetry2d = Constant(50.0)
         self.bnd_conditions = {
+            1: {'diff_flux': Constant(0.0)},
             2: {'value': self.background_salinity},
+            3: {'diff_flux': Constant(0.0)},
             4: {'value': self.background_salinity},
         }
 

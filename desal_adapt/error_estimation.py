@@ -139,7 +139,6 @@ class ErrorEstimator(object):
         """
         Source term for the steady advection-diffusion equation.
         """
-        # TODO: this won't work for time-dependent problems
         return self.options.tracer[self.name].source
 
     def _restrict(self, v):
@@ -257,10 +256,11 @@ class ErrorEstimator(object):
         :arg uv_old: velocity field at previous timestep
         :arg c_old: tracer concentration at previous timestep
         """
-        f_time = (c - c_old)/self.options.timestep
+        # f_time = (c - c_old)/self.options.timestep  # TODO: How to account for time derivative term?
         f = self._potential_steady(uv, c)
         f_old = self._potential_steady(uv_old, c_old)
-        return f_time + self.theta*f + (1-self.theta)*f_old
+        # return f_time + self.theta*f + (1-self.theta)*f_old
+        return self.theta*f + (1-self.theta)*f_old
 
     def _bnd_potential_unsteady(self, uv, c, uv_old, c_old):
         """
@@ -280,7 +280,8 @@ class ErrorEstimator(object):
         """
         Source term for the unsteady advection-diffusion equation.
         """
-        raise NotImplementedError  # TODO
+        # TODO: this won't work for non-constant sources
+        return self._source_steady()
 
     @PETSc.Log.EventDecorator('ErrorEstimator.strong_residual')
     def strong_residual(self, *args):

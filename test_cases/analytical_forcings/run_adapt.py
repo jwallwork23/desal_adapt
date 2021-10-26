@@ -37,11 +37,13 @@ num_tidal_cycles = parsed_args.num_tidal_cycles
 assert num_tidal_cycles > 0.0
 num_subintervals = parsed_args.num_meshes
 assert num_subintervals > 0
+target = parsed_args.target
+assert target > 0.0
 
 # Set parameters
 options = AnalyticalForcingsOptions(level=level, configuration=config, family=family)
 options.simulation_end_time = num_tidal_cycles*options.tide_time
-output_dir = os.path.join(options.output_directory, config, approach, f'{family}1', f'level{level}')
+output_dir = os.path.join(options.output_directory, config, approach, f'{family}1', f'target{target:.0f}')
 options.output_directory = create_directory(output_dir)
 options.fields_to_export = ['tracer_2d']
 
