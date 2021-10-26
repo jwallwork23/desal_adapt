@@ -408,6 +408,8 @@ class ErrorEstimator(object):
         """
         nargs = len(args)
         assert nargs == 4 if self.steady else 8
+        kwargs.pop('error_estimator', 'difference_quotient')
+        kwargs.pop('error_indicator', None)
         if self.metric_type == 'hessian':
             if not self.steady:
                 raise NotImplementedError  # TODO

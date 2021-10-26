@@ -270,7 +270,7 @@ class GoalOrientedDesalinationPlant(GoalOrientedMeshSeq):
                 with pyadjoint.stop_annotating():
                     print_output(f"\n--- Error estimation {fp_iteration}\n")
                     for i, mesh in enumerate(self.meshes):
-                        print_output(f"Constructing metric {i+1}...")
+                        print_output(f"Constructing {approach} metric {i+1}...")
                         options.rebuild_mesh_dependent_components(mesh)
                         options.get_bnd_conditions(self.function_spaces.tracer_2d[i])
 
@@ -315,7 +315,7 @@ class GoalOrientedDesalinationPlant(GoalOrientedMeshSeq):
 
                     # Store metrics
                     for i, metric in enumerate(metrics):
-                        print_output(f"Storing metric data on mesh {i+1}...")
+                        print_output(f"Storing {approach} metric data on mesh {i+1}...")
                         metric_fname = os.path.join(output_dir, f'metric{i}_fp{fp_iteration}')
                         with DumbCheckpoint(metric_fname, mode=FILE_CREATE) as chk:
                             chk.store(metric, name="Metric")
