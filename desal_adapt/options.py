@@ -66,6 +66,12 @@ class PlantOptions(ModelOptions2d):
         """
         pass
 
+    def rebuild_mesh_dependent_components(self, mesh):
+        """
+        Should be implemented in derived class.
+        """
+        pass
+
     def get_depth(self):
         if hasattr(self, 'depth'):
             return self.depth

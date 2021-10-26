@@ -55,7 +55,7 @@ class ErrorEstimator(object):
         # Discretisation parameters
         assert self.options.tracer_timestepper_type in ('CrankNicolson', 'SteadyState')
         self.steady = self.options.tracer_timestepper_type == 'SteadyState'
-        self.theta = None if self.steady else self.options.timestepper_options.implicitness_theta
+        self.theta = None if self.steady else self.options.tracer_timestepper_options.implicitness_theta
         self.is_dg = self.options.tracer_element_family == 'dg'
         if self.is_dg:
             raise NotImplementedError  # TODO
