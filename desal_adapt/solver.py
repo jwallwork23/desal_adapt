@@ -120,7 +120,7 @@ class PlantSolver2d(FlowSolver2d):
         print_output(f'2D cell type: {self.mesh2d.ufl_cell()}')
         msg = f'2D mesh: {nnodes} vertices, {nelem2d} elements'
         if not self.optimise:
-            from pyroteus.mesh_quality import get_aspect_ratios2d
+            from pyroteus.quality import get_aspect_ratios2d
             msg += f', max. aspect ratio {get_aspect_ratios2d(self.mesh2d).vector().gather().max():.1f}'
         print_output(msg)
         print_output(f'Number of 2D tracer DOFs: {dofs_tracer2d}')
@@ -201,7 +201,7 @@ class PlantSolver3d(PlantSolver2d):
         print_output(f'3D cell type: {self.mesh3d.ufl_cell()}')
         msg = f'3D mesh: {nnodes} vertices, {nelem3d} elements'
         if not self.optimise:
-            from pyroteus.mesh_quality import get_aspect_ratios3d
+            from pyroteus.quality import get_aspect_ratios3d
             msg += f', max. aspect ratio {get_aspect_ratios3d(self.mesh3d).vector().gather().max():.1f}'
         print_output(msg)
         print_output(f'Number of 3D tracer DOFs: {dofs_tracer3d}')
