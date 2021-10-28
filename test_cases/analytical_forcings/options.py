@@ -15,7 +15,8 @@ class AnalyticalForcingsOptions(PlantOptions):
     resource_dir = create_directory(os.path.join(os.path.dirname(__file__), 'resources'))
     domain_length = PositiveFloat(3000.0).tag(config=False)
     domain_width = PositiveFloat(1000.0).tag(config=False)
-    background_salinity = FiredrakeScalarExpression(Constant(39.0)).tag(config=True)
+    # background_salinity = FiredrakeScalarExpression(Constant(39.0)).tag(config=True)
+    background_salinity = FiredrakeScalarExpression(Constant(0.0)).tag(config=True)
     tracer_old = FiredrakeScalarExpression(None, allow_none=True).tag(config=True)
 
     def __init__(self, configuration='aligned', level=0, family='cg', mesh=None, **kwargs):
