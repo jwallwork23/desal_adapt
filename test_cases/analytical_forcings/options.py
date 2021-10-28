@@ -29,6 +29,7 @@ class AnalyticalForcingsOptions(PlantOptions):
         assert configuration in ('aligned', 'offset')
         assert level >= 0
         assert family in ('cg', 'dg')
+        self.configuration = configuration
         self.qoi_value = 0
 
         # Setup mesh
@@ -58,12 +59,16 @@ class AnalyticalForcingsOptions(PlantOptions):
             4: {'value': self.background_salinity},
         }
 
+        # Sponge condition for CG
+        x, y = SpatialCoordinate(self.mesh2d)
+        # if family == 'cg':
+        #     D = D + conditional(abs(x) > 1400, exp((abs(x) - 1400)/20), 0)
+
         # Outlet parametrisation
         self.outlet_value = 2.0  # Discharge rate
         outlet_x = 0.0
         outlet_y = 100.0
         outlet_r = 25.0
-        x, y = SpatialCoordinate(self.mesh2d)
         self.source = self.outlet_value*exp(-((x - outlet_x)**2 + (y - outlet_y)**2)/outlet_r**2)
         self.add_tracer_2d('tracer_2d',
                            'Depth averaged salinity',
@@ -73,7 +78,7 @@ class AnalyticalForcingsOptions(PlantOptions):
                            source=self.source)
 
         # Inlet parametrisation
-        inlet_x = 0.0 if configuration == 'aligned' else 400.0
+        inlet_x = 0.0 if self.configuration == 'aligned' else 400.0
         inlet_y = -100.0
         inlet_r = 25.0
         ball = conditional((x - inlet_x)**2 + (y - inlet_y)**2 < inlet_r**2, 1, 0)
@@ -100,9 +105,9 @@ class AnalyticalForcingsOptions(PlantOptions):
 
         # Solver parameters
         self.tracer_timestepper_options.solver_parameters.update({
-            'ksp_max_it': 10000,
-            'ksp_type': 'gmres',
-            'pc_type': 'ilu',
+            'ksp_type': 'preonly',
+            'pc_type': 'lu',
+            'pc_factor_mat_solver_type': 'mumps',
         })
 
         # I/O
@@ -166,7 +171,7 @@ class AnalyticalForcingsOptions(PlantOptions):
                            source=self.source)
 
         # Inlet parametrisation
-        inlet_x = 0.0 if configuration == 'aligned' else 400.0
+        inlet_x = 0.0 if self.configuration == 'aligned' else 400.0
         inlet_y = -100.0
         inlet_r = 25.0
         ball = conditional((x - inlet_x)**2 + (y - inlet_y)**2 < inlet_r**2, 1, 0)

@@ -9,7 +9,7 @@ from pyadjoint import pause_annotation
 
 # Parse arguments
 parser = Parser(prog='test_cases/analytical_forcings/run_fixed_mesh.py')
-parser.add_argument('configuration', 'aligned', help="""
+parser.add_argument('-configuration', 'offset', help="""
     Choose from 'aligned' and 'offset'.
     """)
 parser.add_argument('-level', 0, help="""

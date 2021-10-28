@@ -5,10 +5,10 @@ from options import AnalyticalForcingsOptions
 
 # Parse arguments
 parser = Parser(prog='test_cases/analytical_forcings/run_adapt.py')
-parser.add_argument('configuration', 'aligned', help="""
+parser.add_argument('approach', 'isotropic_dwr')
+parser.add_argument('-configuration', 'offset', help="""
     Choose from 'aligned' and 'offset'.
     """)
-parser.add_argument('approach', 'isotropic_dwr')
 parser.add_argument('-level', 0, help="""
     Mesh resolution level inside the refined region.
     Choose a value from [0, 1, 2, 3, 4, 5] (default 0).""")
