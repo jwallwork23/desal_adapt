@@ -77,7 +77,10 @@ class PlantSolver2d(FlowSolver2d):
         super(PlantSolver2d, self).create_equations()
         self.options._isfrozen = False
         self.options.test_function = self.equations.tracer_2d.test
-        self.options.cell_size = self.equations.tracer_2d.cellsize
+        if hasattr(self.equations.tracer_2d, 'cellsize'):
+            self.options.cell_size = self.equations.tracer_2d.cellsize
+        else:
+            self.options.cell_size = CellSize(self.mesh2d)
         self.options._isfrozen = True
 
     def create_exporters(self, i_export=0, t_start=0.0, compute_salinity=False):
@@ -287,7 +290,10 @@ class PlantSolver3d(PlantSolver2d):
         self._isfrozen = True
         self.options._isfrozen = False
         self.options.test_function = self.equations.tracer_3d.test
-        self.options.cell_size = self.equations.tracer_3d.cellsize
+        if hasattr(self.equations.tracer_3d, 'cellsize'):
+            self.options.cell_size = self.equations.tracer_3d.cellsize
+        else:
+            self.options.cell_size = CellSize(self.mesh3d)
         self.options._isfrozen = True
 
     @PETSc.Log.EventDecorator('PlantSolver3d.get_tracer_timestepper')
