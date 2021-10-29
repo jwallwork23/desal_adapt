@@ -124,15 +124,19 @@ class ErrorEstimator(object):
                 tag = int(bnd_marker)
                 bnd_terms[tag] = dot(D*grad(c), self.n)
                 c_in = c
-                if 'value' in funcs:
-                    uv_ext, c_ext = self._get_bnd_functions(uv, c, bnd_marker)
-                    uv_av = 0.5*(uv + uv_ext)
-                    s = 0.5*(sign(dot(uv_av, self.n)) + 1.0)
-                    c_up = c_in*s + c_ext*(1-s)
-                    diff_flux_up = D*grad(c_up)
-                    bnd_terms[tag] += -dot(diff_flux_up, self.n)
-                elif 'diff_flux' in funcs:
+                uv_ext, c_ext = self._get_bnd_functions(uv, c, bnd_marker)
+                uv_av = 0.5*(uv + uv_ext)
+                un_av = self.n[0]*uv_av[0] + self.n[1]*uv_av[1]
+                s = 0.5*(sign(un_av) + 1.0)
+                c_up = c_in*s + c_ext*(1-s)
+                if 'diff_flux' in funcs:
                     bnd_terms[tag] += -funcs['diff_flux']
+                else:
+                    bnd_terms[tag] += -dot(D*grad(c_up), self.n)
+                if funcs is None:
+                    bnd_terms[tag] += c_in*(uv[0]*self.n[0] + uv[1]*self.n[1])
+                else:
+                    bnd_terms[tag] += c_up*(uv_av[0]*self.n[0] + uv_av[1]*self.n[1])
         return bnd_terms
 
     def _source_steady(self):
@@ -176,7 +180,8 @@ class ErrorEstimator(object):
         # TODO: tracer_advective_velocity_factor?
         D = self.options.tracer[self.name].diffusivity
         psi = Function(self.P0)
-        ibp_terms = self._restrict(inner(D*grad(c), self.n))*dS
+        ibp_terms = self._restrict(inner(D*grad(c), self.n))*dS \
+            - self._restrict(inner(uv*c, self.n))*dS
         flux_terms = 0
         bnd_terms = {}
         if self.boundary:
@@ -187,19 +192,23 @@ class ErrorEstimator(object):
                 c_in = c
 
                 # Terms from integration by parts
-                bnd_terms[ds_bnd] = inner(D*grad(c_in), self.n)
+                bnd_terms[ds_bnd] = inner(D*grad(c_in), self.n) - inner(uv*c_in, self.n)
 
                 # Terms from boundary conditions
-                if 'value' in funcs:
-                    uv_ext, c_ext = self._get_bnd_functions(uv, c, bnd_marker)
-                    uv_ext_old, c_ext_old = self._get_bnd_functions(uv_old, c_old, bnd_marker)
-                    uv_av = 0.5*(uv + uv_ext)
-                    s = 0.5*(sign(dot(uv_av, self.n)) + 1.0)
-                    c_up = c_in*s + c_ext*(1-s)
-                    diff_flux_up = D*grad(c_up)
-                    bnd_terms[ds_bnd] += -dot(diff_flux_up, self.n)
-                elif 'diff_flux' in funcs:
+                uv_ext, c_ext = self._get_bnd_functions(uv, c, bnd_marker)
+                uv_ext_old, c_ext_old = self._get_bnd_functions(uv_old, c_old, bnd_marker)
+                uv_av = 0.5*(uv + uv_ext)
+                un_av = self.n[0]*uv_av[0] + self.n[1]*uv_av[1]
+                s = 0.5*(sign(un_av) + 1.0)
+                c_up = c_in*s + c_ext*(1-s)
+                if 'diff_flux' in funcs:
                     bnd_terms[ds_bnd] += -funcs['diff_flux']
+                else:
+                    bnd_terms[ds_bnd] += -dot(D*grad(c_up), self.n)
+                if funcs is None:
+                    bnd_terms[ds_bnd] += c_in*(uv[0]*self.n[0] + uv[1]*self.n[1])
+                else:
+                    bnd_terms[ds_bnd] += c_up*(uv_av[0]*self.n[0] + uv_av[1]*self.n[1])
 
         # Compute flux norm
         mass_term = self.p0test*self.p0trial*dx
@@ -213,8 +222,7 @@ class ErrorEstimator(object):
             'mat_type': 'matfree',
             'snes_type': 'ksponly',
             'ksp_type': 'preonly',
-            'pc_type': 'python',
-            'pc_python_type': 'firedrake.MassInvPC',
+            'pc_type': 'jacobi',
         }
         solve(mass_term == flux_terms + ibp_terms + bnd_terms, psi, solver_parameters=sp)
         psi.interpolate(abs(psi))
