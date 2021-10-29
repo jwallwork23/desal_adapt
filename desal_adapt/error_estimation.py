@@ -122,21 +122,12 @@ class ErrorEstimator(object):
             for bnd_marker in bnd_conditions:
                 funcs = bnd_conditions.get(bnd_marker)
                 tag = int(bnd_marker)
-                bnd_terms[tag] = dot(D*grad(c), self.n)
                 c_in = c
                 uv_ext, c_ext = self._get_bnd_functions(uv, c, bnd_marker)
-                uv_av = 0.5*(uv + uv_ext)
-                un_av = self.n[0]*uv_av[0] + self.n[1]*uv_av[1]
-                s = 0.5*(sign(un_av) + 1.0)
-                c_up = c_in*s + c_ext*(1-s)
                 if 'diff_flux' in funcs:
-                    bnd_terms[tag] += -funcs['diff_flux']
-                else:
-                    bnd_terms[tag] += -dot(D*grad(c_up), self.n)
-                if funcs is None:
-                    bnd_terms[tag] += c_in*(uv[0]*self.n[0] + uv[1]*self.n[1])
-                else:
-                    bnd_terms[tag] += c_up*(uv_av[0]*self.n[0] + uv_av[1]*self.n[1])
+                    bnd_terms[tag] = dot(D*grad(c_in), self.n) - funcs['diff_flux']
+                elif 'value' in funcs:
+                    bnd_terms[tag] = (c_ext - c_in)*(uv[0]*self.n[0] + uv[1]*self.n[1])
         return bnd_terms
 
     def _source_steady(self):
@@ -432,12 +423,11 @@ class ErrorEstimator(object):
             kwargs['approach'] = self.metric_type
 
             # Terms for standard a posteriori error estimate
-            Psi = self.strong_residual(*args[:nargs//2])
-            psi = self.flux_terms(*args[:nargs//2])
-            ee = Psi + psi/sqrt(self.h)
+            ee = self.strong_residual(*args[:nargs//2])
 
             # Adjoint weighting for anisotropic DWR
             if self.metric_type == 'anisotropic_dwr':
+                ee = ee + self.flux_terms(*args[:nargs//2])/sqrt(self.h)
                 if flux_form:
                     R = self.flux_terms(*args[nargs//2:])
                 else:
@@ -493,7 +483,7 @@ class ErrorEstimator(object):
             # Get tags related to Neumann and natural conditions
             tags = self.mesh.exterior_facets.unique_markers
             bcs = {tag: self.options.bnd_conditions.get(tag) or {} for tag in tags}
-            tags = [tag for tag in tags if 'diff_flux' in bcs[tag]]
+            tags = [tag for tag in tags if 'diff_flux' in bcs[tag] or 'value' in bcs[tag]]
 
             # Boundary metric
             Fbar = self.bnd_potential(*args[:nargs//2])
