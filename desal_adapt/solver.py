@@ -130,17 +130,6 @@ class PlantSolver2d(FlowSolver2d):
         print_output(f'Number of cores: {self.comm.size}')
         print_output(f'Tracer DOFs per core: ~{dofs_tracer2d_core:.1f}')
 
-    @PETSc.Log.EventDecorator('PlantSolver2d.iterate')
-    def iterate(self, **kwargs):
-        try:
-            super(PlantSolver2d, self).iterate(**kwargs)
-        except firedrake.ConvergenceError:
-            k = self.options.tracer_timestepper_options.solver_parameters['pc_factor_levels']
-            print_output(f'Forward solve failed to converge with ILU({k})'
-                         f' trying ILU({k+1}).')
-            self.options.tracer_timestepper_options.solver_parameters['pc_factor_levels'] += 1
-            self.iterate(**kwargs)
-
 
 class PlantSolver3d(PlantSolver2d):
     """

@@ -113,12 +113,10 @@ class PointDischarge3dOptions(PlantOptions):
 
         # Solver parameters
         self.tracer_timestepper_options.solver_parameters.update({
-            'ksp_converged_reason': None,
-            'ksp_max_it': 20000,
-            'ksp_type': 'gmres',
-            'ksp_gmres_restart': 20,
-            'pc_type': 'ilu',
-            'pc_factor_levels': 0,
+            'mat_type': 'aij',
+            'ksp_type': 'preonly',
+            'pc_type': 'lu',
+            'pc_factor_mat_solver_type': 'mumps',
         })
 
         # I/O
