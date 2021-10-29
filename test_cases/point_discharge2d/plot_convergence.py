@@ -26,9 +26,6 @@ parser.add_argument('configuration', 'aligned', help="""
     """)
 parser.add_argument('-family', 'cg')
 parser.add_argument('-recovery_method', 'Clement')
-parser.add_argument('-dpi', 500, help="""
-    Dots per inch (default 500).
-    """)
 parsed_args = parser.parse_args()
 config = parsed_args.configuration
 assert config in ['aligned', 'offset']
@@ -37,7 +34,6 @@ space = f'{family}1'
 assert family in ['cg', 'dg']
 method = parsed_args.recovery_method
 assert method in ['L2', 'Clement']
-dpi = parsed_args.dpi
 plot_dir = create_directory(os.path.join('plots', config, f'{family}1', method))
 
 # Load data
@@ -69,7 +65,8 @@ else:
     axes.set_ylim([0.0, 0.1])
 axes.grid(True)
 plt.tight_layout()
-plt.savefig(os.path.join(plot_dir, f'dofs_vs_qoi_{config}.jpg'), dpi=dpi)
+plt.savefig(os.path.join(plot_dir, f'dofs_vs_qoi_{config}.svg'))
+plt.savefig(os.path.join(plot_dir, f'dofs_vs_qoi_{config}.pdf'))
 if uniform is None:
     print('Cannot plot errors because fixed mesh benchmarks do not exist yet.')
     sys.exit(0)
@@ -91,7 +88,8 @@ axes.set_xticks([1.0e+03, 1.0e+04, 1.0e+05])
 axes.set_yticks([0.1, 1, 10, 100])
 axes.grid(True)
 plt.tight_layout()
-plt.savefig(os.path.join(plot_dir, f'dofs_vs_qoi_error_{config}.jpg'), dpi=dpi)
+plt.savefig(os.path.join(plot_dir, f'dofs_vs_qoi_error_{config}.svg'))
+plt.savefig(os.path.join(plot_dir, f'dofs_vs_qoi_error_{config}.pdf'))
 fig, axes = plt.subplots()
 axes.semilogx(uniform['dofs'][:-1], uniform['error'], '--', marker='x', label='Uniform')
 for data, label, marker in zip(runs, labels, markers):
@@ -103,7 +101,8 @@ axes.set_yticks(np.linspace(0, 100, 11))
 axes.set_ylim([-1, 100])
 axes.grid(True)
 plt.tight_layout()
-plt.savefig(os.path.join(plot_dir, f'dofs_vs_qoi_error_semilogx_{config}.jpg'), dpi=dpi)
+plt.savefig(os.path.join(plot_dir, f'dofs_vs_qoi_error_semilogx_{config}.svg'))
+plt.savefig(os.path.join(plot_dir, f'dofs_vs_qoi_error_semilogx_{config}.pdf'))
 
 # Plot legend
 fig2, axes2 = plt.subplots()
@@ -111,4 +110,5 @@ legend = axes2.legend(*axes.get_legend_handles_labels(), fontsize=18, frameon=Fa
 fig2.canvas.draw()
 axes2.set_axis_off()
 bbox = legend.get_window_extent().transformed(fig2.dpi_scale_trans.inverted())
-plt.savefig(os.path.join(plot_dir, 'legend.jpg'), bbox_inches=bbox, dpi=dpi)
+plt.savefig(os.path.join(plot_dir, 'legend.svg'), bbox_inches=bbox)
+plt.savefig(os.path.join(plot_dir, 'legend.pdf'), bbox_inches=bbox)

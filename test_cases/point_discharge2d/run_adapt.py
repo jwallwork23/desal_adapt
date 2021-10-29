@@ -164,4 +164,5 @@ if not profile:
     plt.tight_layout()
     cwd = os.path.join(os.path.dirname(__file__))
     plot_dir = create_directory(os.path.join(cwd, 'plots', config, f'{family}1', method_str))
+    plt.savefig(os.path.join(plot_dir, f'{approach}_mesh_{config}_target{target:.0f}.pdf'))
     plt.savefig(os.path.join(plot_dir, f'{approach}_mesh_{config}_target{target:.0f}.jpg'), dpi=500)
