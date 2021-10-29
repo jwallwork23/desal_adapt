@@ -465,11 +465,11 @@ class ErrorEstimator(object):
             p = kwargs.get('norm_order')
 
             # Interior metric
-            H0 = hessian_metric(self.recover_hessian(F[0]))
-            H0.interpolate(H0*abs(g[0]))
-            H1 = hessian_metric(self.recover_hessian(F[1]))
-            H1.interpolate(H1*abs(g[1]))
-            interior_metrics = [H0, H1]
+            interior_metrics = []
+            for i in range(self.dim):
+                Hi = hessian_metric(self.recover_hessian(F[i]))
+                Hi.interpolate(Hi*abs(g[i]))
+                interior_metrics.append(Hi)
             if self.weighted_gradient_source:  # NOTE: only currently works for constant sources
                 Hs = hessian_metric(self.recover_hessian(self.source()))
                 Hs.interpolate(Hs*abs(adj))
