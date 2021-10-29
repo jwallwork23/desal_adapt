@@ -34,5 +34,4 @@ clean:
 	@for i in target1000 target4000 target16000 target64000 target256000; do rm -rf outputs/offset/weighted_gradient/cg1/$$i/*.h5; done
 
 plot:
-	@python3 plot_convergence.py aligned
-	@python3 plot_convergence.py offset
+	@python3 plot_convergence.py -configuration offset
