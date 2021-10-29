@@ -65,6 +65,7 @@ flux_form = parsed_args.flux_form
 method_str = method if method != 'L2' or not mixed_L2 else method + '_mixed'
 cwd = os.path.join(os.path.dirname(__file__))
 output_dir = create_directory(os.path.join(cwd, 'outputs', config, approach, 'cg1', method_str))
+refs = [0, num_refinements] if num_repetitions > 1 else range(num_refinements + 1)
 
 # Loop over mesh refinement levels
 lines = 'qois,dofs,elements,wallclock,iterations,wallclock_metric\n'
@@ -72,7 +73,7 @@ tape = get_working_tape()
 if approach == 'hessian':
     stop_annotating()
 converged_reason = None
-for level in range(num_refinements + 1):
+for level in refs:
     target = 400.0*4.0**level
     if approach == 'anisotropic_dwr':
         target *= 2.0
