@@ -28,10 +28,10 @@ weighted_gradient:
 	@for target in 1000 4000 16000 64000 256000; do python3 run_adapt.py weighted_gradient -target $$target; done
 
 clean:
-	@for i in target1000 target4000 target16000 target64000 target256000; do rm -rf outputs/offset/isotropic_dwr/cg1/target$$i000/*.h5; done
-	@for i in target1000 target4000 target16000 target64000 target256000; do rm -rf outputs/offset/anisotropic_dwr/cg1/target$$i000/*.h5; done
-	@for i in target1000 target4000 target16000 target64000 target256000; do rm -rf outputs/offset/weighted_hessian/cg1/target$$i000/*.h5; done
-	@for i in target1000 target4000 target16000 target64000 target256000; do rm -rf outputs/offset/weighted_gradient/cg1/target$$i000/*.h5; done
+	@for i in target1000 target4000 target16000 target64000 target256000; do rm -rf outputs/offset/isotropic_dwr/cg1/$$i/*.h5; done
+	@for i in target1000 target4000 target16000 target64000 target256000; do rm -rf outputs/offset/anisotropic_dwr/cg1/$$i/*.h5; done
+	@for i in target1000 target4000 target16000 target64000 target256000; do rm -rf outputs/offset/weighted_hessian/cg1/$$i/*.h5; done
+	@for i in target1000 target4000 target16000 target64000 target256000; do rm -rf outputs/offset/weighted_gradient/cg1/$$i/*.h5; done
 
 plot:
 	@python3 plot_convergence.py aligned
