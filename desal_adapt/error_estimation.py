@@ -474,7 +474,7 @@ class ErrorEstimator(object):
                 Hs = hessian_metric(self.recover_hessian(self.source()))
                 Hs.interpolate(Hs*abs(adj))
                 interior_metrics.append(Hs)
-            Hint = combine_metrics(*interior_metrics, average=kwargs.get('average', True))
+            Hint = combine_metrics(*interior_metrics, average=kwargs.get('average', False))
             if not kwargs.get('boundary', True):
                 enforce_element_constraints(Hint, 1.0e-30, 1.0e+30, 1.0e+12, optimise=True)
                 space_normalise(Hint, target, p, boundary=False)
