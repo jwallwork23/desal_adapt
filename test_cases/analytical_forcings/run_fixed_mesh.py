@@ -15,6 +15,9 @@ parser.add_argument('-configuration', 'offset', help="""
 parser.add_argument('-level', 0, help="""
     Mesh resolution level inside the refined region.
     Choose a value from [0, 1, 2, 3, 4, 5] (default 0).""")
+parser.add_argument('-num_uniform_refinements', 0, help="""
+    Number of uniform refinement to take across the
+    whole domain (default 0).""")
 parser.add_argument('-family', 'cg')
 parser.add_argument('-num_tidal_cycles', 2.0)
 parser.add_argument('-no_exports', False)
@@ -24,13 +27,15 @@ level = parsed_args.level
 family = parsed_args.family
 num_tidal_cycles = parsed_args.num_tidal_cycles
 assert num_tidal_cycles > 0.0
+refs = parsed_args.num_uniform_refinements
 cpu_timestamp = perf_counter()
 pause_annotation()
 
 # Set parameters
-options = AnalyticalForcingsOptions(level=level, configuration=config, family=family)
+options = AnalyticalForcingsOptions(level=level, configuration=config, family=family,
+                                    num_uniform_refinements=refs)
 options.simulation_end_time = num_tidal_cycles*options.tide_time
-output_dir = os.path.join(options.output_directory, config, 'fixed_mesh', f'{family}1', f'level{level}')
+output_dir = os.path.join(options.output_directory, config, 'fixed_mesh', f'{family}1', f'level{level}', 'refs{refs}')
 options.output_directory = create_directory(output_dir)
 options.fields_to_export = [] if parsed_args.no_exports else ['tracer_2d']
 

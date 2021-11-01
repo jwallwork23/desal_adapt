@@ -18,6 +18,7 @@ family = parsed_args.family
 space = f'{family}1'
 assert family in ['cg', 'dg']
 cwd = os.path.dirname(__file__)
+root_dir = os.path.join(cwd, 'outputs', config)
 
 # Load data
 approaches = ['fixed_mesh', 'isotropic_dwr', 'anisotropic_dwr', 'weighted_hessian', 'weighted_gradient']
@@ -27,16 +28,20 @@ colours = ['C0', 'C2', 'C3', 'C4', 'C5']
 data = {approach: {'dofs': [], 'qoi': [], 'wallclock': []} for approach in approaches}
 for approach in approaches:
     for i in range(5):
-        target = f'level{i}' if approach == 'fixed_mesh' else f'target{1000*4**i}'
-        fname = os.path.join(cwd, 'outputs', config, approach, f'{family}1', target, 'qoi.log')
-        if not os.path.exists(fname):
-            print(f"File '{fname}' not found.")
-            continue
         if approach == 'fixed_mesh':
+            # fname = os.path.join(root_dir, approach, f'{family}1', f'levels{i}', 'refs0', 'qoi.log')
+            fname = os.path.join(root_dir, approach, f'{family}1', 'levels0', f'refs{i}', 'qoi.log')
+            if not os.path.exists(fname):
+                print(f"file '{fname}' not found.")
+                continue
             f = pd.read_csv(fname)
             for key in data[approach]:
                 data[approach][key].append(f[key][0])
         else:
+            fname = os.path.join(root_dir, approach, f'{family}1', f'target{1000*4**i}', 'qoi.log')
+            if not os.path.exists(fname):
+                print(f"File '{fname}' not found.")
+                continue
             lines = open(fname, 'r').readlines()
             data[approach]['qoi'].append(float(lines[1].split('=')[-1]))
             data[approach]['wallclock'].append(float(lines[2].split('=')[-1].split()[0]))

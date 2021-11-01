@@ -25,6 +25,8 @@ class AnalyticalForcingsOptions(PlantOptions):
         :kwarg level: mesh resolution level
         :kwarg family: choose from 'cg' and 'dg'
         :kwarg mesh: user-provided mesh
+        :kwarg nuum_niform_refinements: number of uniform refinements
+            to take over the whole domain
         """
         super(AnalyticalForcingsOptions, self).__init__(**kwargs)
         assert configuration in ('aligned', 'offset')
@@ -44,6 +46,10 @@ class AnalyticalForcingsOptions(PlantOptions):
                 raise IOError(f'Mesh file "{mesh_file}" needs to be generated.')
         else:
             self.mesh2d = mesh
+        if 'num_uniform_refinements' in kwargs:
+            refs = kwargs.get('num_uniform_refinements')
+            if refs > 0:
+                self.mesh2d = MeshHierarchy(self.mesh2d, refs)[-1]
         self.setup_mesh(self.mesh2d)
 
         # Physics
