@@ -81,6 +81,10 @@ class Parser(object):
                 Toggle whether to use the flux form of the difference quotient
                 error indicator (default {:b}).
                 """},
+            'boundary': {'type': bool, 'msg': """
+                Toggle whether to include boundary contributions in the weighted
+                gradient metric (default {:b}).
+                """},
             'load_index': {'type': int, 'msg': """
                 Index for loading mesh and metric data from file (default {:d}).
                 """},
