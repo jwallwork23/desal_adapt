@@ -8,7 +8,7 @@ fixed_mesh:
 	@for i in 0 1 2 3 4; do python3 run_fixed_mesh.py -level $$i -no_exports 1; done
 
 # TODO: drop exports, etc.
-convergence:
+convergence: clean_h5
 	@for target in 1000 4000 16000 64000 256000; do for approach in isotropic_dwr anisotropic_dwr weighted_hessian weighted_gradient; do python3 run_adapt.py $$approach -target $$target; done; done
 
 # TODO: drop exports, etc.

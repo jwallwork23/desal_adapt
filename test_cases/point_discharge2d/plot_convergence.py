@@ -26,6 +26,9 @@ parser.add_argument('configuration', 'aligned', help="""
     """)
 parser.add_argument('-family', 'cg')
 parser.add_argument('-recovery_method', 'Clement')
+parser.add_argument('-error_type', 'discretisation', help="""
+    Choose from 'discretisation' and 'total'.
+    """)
 parsed_args = parser.parse_args()
 config = parsed_args.configuration
 assert config in ['aligned', 'offset']
@@ -34,6 +37,8 @@ space = f'{family}1'
 assert family in ['cg', 'dg']
 method = parsed_args.recovery_method
 assert method in ['L2', 'Clement']
+error_type = parsed_args.error_type
+assert error_type in ['discretisation', 'total']
 plot_dir = create_directory(os.path.join('plots', config, f'{family}1', method))
 
 # Load data
@@ -55,7 +60,10 @@ print(f"Analytical QoI value = {qoi_analytical}")
 f.close()
 
 # QoI errors
-truth = uniform['qois'][-1]
+if error_type == 'discretisation':
+    truth = uniform['qois'][-1]
+else:
+    truth = qoi_analytical
 uniform['error'] = 100*np.abs((uniform['qois'][:-1] - truth)/truth)
 for data in runs:
     data['error'] = 100*np.abs((data['qois'] - truth)/truth)

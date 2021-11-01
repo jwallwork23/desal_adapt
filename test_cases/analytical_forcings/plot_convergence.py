@@ -82,7 +82,7 @@ for approach, name, marker, colour in zip(approaches, names, markers, colours):
 axes.set_xlabel('Target space-time complexity')
 axes.set_ylabel('Quantity of Interest')
 axes.set_xticks([1.0e+06, 1.0e+07, 1.0e+08])
-axes.set_yticks([9.275e+06, 9.3e+06, 9.325e+06, 9.350e+06, 9.375e+06])
+axes.set_yticks([9.29e+06, 9.30e+06, 9.31e+06, 9.32e+06, 9.33e+06])
 axes.grid(True)
 plt.tight_layout()
 plt.savefig(os.path.join(plot_dir, f'qoi_vs_target_{config}.pdf'))
