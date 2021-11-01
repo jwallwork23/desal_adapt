@@ -27,7 +27,29 @@ weighted_hessian:
 weighted_gradient:
 	@for target in 1000 4000 16000 64000 256000; do python3 run_adapt.py weighted_gradient -target $$target; done
 
-clean:
+clean: clean_vtu clean_h5
+
+clean_lagged_vtu:
+	@for i in target1000 target4000 target16000 target64000 target256000; do rm -rf outputs/offset/isotropic_dwr/cg1/$$i/AdjointNext2d*; done
+	@for i in target1000 target4000 target16000 target64000 target256000; do rm -rf outputs/offset/isotropic_dwr/cg1/$$i/ForwardOld2d*; done
+	@for i in target1000 target4000 target16000 target64000 target256000; do rm -rf outputs/offset/anisotropic_dwr/cg1/$$i/AdjointNext2d*; done
+	@for i in target1000 target4000 target16000 target64000 target256000; do rm -rf outputs/offset/anisotropic_dwr/cg1/$$i/ForwardOld2d*; done
+	@for i in target1000 target4000 target16000 target64000 target256000; do rm -rf outputs/offset/weighted_hessian/cg1/$$i/AdjointNext2d*; done
+	@for i in target1000 target4000 target16000 target64000 target256000; do rm -rf outputs/offset/weighted_hessian/cg1/$$i/ForwardOld2d*; done
+	@for i in target1000 target4000 target16000 target64000 target256000; do rm -rf outputs/offset/weighted_gradient/cg1/$$i/AdjointNext2d*; done
+	@for i in target1000 target4000 target16000 target64000 target256000; do rm -rf outputs/offset/weighted_gradient/cg1/$$i/ForwardOld2d*; done
+
+clean_vtu: clean_lagged_vtu
+	@for i in target1000 target4000 target16000 target64000 target256000; do rm -rf outputs/offset/isotropic_dwr/cg1/$$i/Adjoint2d*; done
+	@for i in target1000 target4000 target16000 target64000 target256000; do rm -rf outputs/offset/isotropic_dwr/cg1/$$i/Forward2d*; done
+	@for i in target1000 target4000 target16000 target64000 target256000; do rm -rf outputs/offset/anisotropic_dwr/cg1/$$i/Adjoint2d*; done
+	@for i in target1000 target4000 target16000 target64000 target256000; do rm -rf outputs/offset/anisotropic_dwr/cg1/$$i/Forward2d*; done
+	@for i in target1000 target4000 target16000 target64000 target256000; do rm -rf outputs/offset/weighted_hessian/cg1/$$i/Adjoint2d*; done
+	@for i in target1000 target4000 target16000 target64000 target256000; do rm -rf outputs/offset/weighted_hessian/cg1/$$i/Forward2d*; done
+	@for i in target1000 target4000 target16000 target64000 target256000; do rm -rf outputs/offset/weighted_gradient/cg1/$$i/Adjoint2d*; done
+	@for i in target1000 target4000 target16000 target64000 target256000; do rm -rf outputs/offset/weighted_gradient/cg1/$$i/Forward2d*; done
+
+clean_h5:
 	@for i in target1000 target4000 target16000 target64000 target256000; do rm -rf outputs/offset/isotropic_dwr/cg1/$$i/*.h5; done
 	@for i in target1000 target4000 target16000 target64000 target256000; do rm -rf outputs/offset/anisotropic_dwr/cg1/$$i/*.h5; done
 	@for i in target1000 target4000 target16000 target64000 target256000; do rm -rf outputs/offset/weighted_hessian/cg1/$$i/*.h5; done
