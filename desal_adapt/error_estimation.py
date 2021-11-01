@@ -219,6 +219,19 @@ class ErrorEstimator(object):
         psi.interpolate(abs(psi))
         return sqrt(psi) if self.norm_type == 'L2' else psi
 
+    def _time_derivative(self, uv, c, uv_old, c_old):
+        """
+        Time derivative for unsteady mode.
+
+        :arg uv: velocity field at current timestep
+        :arg c: tracer concentration at current timestep
+        :arg uv_old: velocity field at previous timestep
+        :arg c_old: tracer concentration at previous timestep
+        """
+        if self.steady:
+            raise ValueError("Time derivative terms only make sense in unsteady mode.")
+        return (c - c_old)/self.options.timestep
+
     def _Psi_unsteady(self, uv, c, uv_old, c_old):
         """
         Strong residual for unsteady mode.
@@ -228,7 +241,7 @@ class ErrorEstimator(object):
         :arg uv_old: velocity field at previous timestep
         :arg c_old: tracer concentration at previous timestep
         """
-        f_time = (c - c_old)/self.options.timestep
+        f_time = self._time_derivative(uv, c, uv_old, c_old)
         f = self._Psi_steady(uv, c)
         f_old = self._Psi_steady(uv_old, c_old)
         return f_time + self.theta*f + (1-self.theta)*f_old
@@ -255,10 +268,8 @@ class ErrorEstimator(object):
         :arg uv_old: velocity field at previous timestep
         :arg c_old: tracer concentration at previous timestep
         """
-        # f_time = (c - c_old)/self.options.timestep  # TODO: How to account for time derivative term?
         f = self._potential_steady(uv, c)
         f_old = self._potential_steady(uv_old, c_old)
-        # return f_time + self.theta*f + (1-self.theta)*f_old
         return self.theta*f + (1-self.theta)*f_old
 
     def _bnd_potential_unsteady(self, uv, c, uv_old, c_old):
@@ -466,14 +477,19 @@ class ErrorEstimator(object):
 
             # Interior metric
             interior_metrics = []
-            for i in range(self.dim):
+            for i in range(self.dim):          # |F_i(c)| |dc*/dxi|
                 Hi = hessian_metric(self.recover_hessian(F[i]))
                 Hi.interpolate(Hi*abs(g[i]))
                 interior_metrics.append(Hi)
-            if self.weighted_gradient_source:  # NOTE: only currently works for constant sources
+            if not self.steady:                # |c_t| |c*|
+                f_time = self._time_derivative(*args[:nargs//2])
+                Ht = hessian_metric(self.recover_hessian(f_time))
+                Ht.interpolate(Ht*abs(adj))
+                interior_metrics.append(Ht)
+            if self.weighted_gradient_source:  # |H(s)| |c*|
                 Hs = hessian_metric(self.recover_hessian(self.source()))
                 Hs.interpolate(Hs*abs(adj))
-                interior_metrics.append(Hs)
+                interior_metrics.append(Hs)  # NOTE: only currently works for constant sources
             Hint = combine_metrics(*interior_metrics, average=kwargs.get('average', False))
             if not kwargs.get('boundary', True):
                 enforce_element_constraints(Hint, 1.0e-30, 1.0e+30, 1.0e+12, optimise=True)
