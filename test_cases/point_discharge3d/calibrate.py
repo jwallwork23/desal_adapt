@@ -20,7 +20,6 @@ ig = parsed_args.initial_guess
 # Set parameters
 options = PointDischarge3dOptions(level=level, family=family, pipe_radius=ig)
 options.no_exports = True
-options.tracer_timestepper_options.solver_parameters.pop('ksp_converged_reason')
 output_dir = create_directory(os.path.join(os.path.dirname(__file__), 'data'))
 
 # Setup solver
