@@ -4,6 +4,7 @@ from desal_adapt.plotting import *
 from firedrake_adjoint import *
 from firedrake.adjoint.solving import get_solve_blocks
 from options import PointDischarge3dOptions
+from time import perf_counter
 
 
 # Parse arguments
@@ -66,6 +67,8 @@ qoi_old = None
 elements_old = None
 converged_reason = None
 tape = get_working_tape()
+cpu_timestamp = perf_counter()
+cpu_time_metric = 0
 for i in range(maxiter):
     tape.clear_tape()
     msg = f'Iteration {i+1}/{maxiter} ({approach}, {config})'
@@ -106,6 +109,7 @@ for i in range(maxiter):
             break
 
     # Construct metric
+    cpu_timestamp_metric = perf_counter()
     ee = ErrorEstimator(options, error_estimator='difference_quotient', metric=approach, recovery_method=method)
     uv = solver_obj.fields.uv_3d
     if approach == 'hessian':
@@ -126,6 +130,7 @@ for i in range(maxiter):
                                boundary=boundary)
             if not profile:
                 File(os.path.join(output_dir, 'metric_3d.pvd')).write(metric)
+    cpu_time_metric += perf_counter() - cpu_timestamp_metric
     with stop_annotating():
         if approach not in ('anisotropic_dwr', 'weighted_gradient'):
             enforce_element_constraints(metric, 1.0e-30, 1.0e+30, 1.0e+12, optimise=profile)
@@ -146,6 +151,8 @@ for i in range(maxiter):
 
 # Print final QoI value
 print_output(f"Converged after {i+1} iterations due to {converged_reason} convergence.")
+print_output(f"CPU time: {perf_counter() - cpu_timestamp}s")
+print_output(f"Metric time: {cpu_time_metric}s")
 if converged_reason == 'element_count':
     options = PointDischarge3dOptions(level=level, family=family, configuration=config, mesh=mesh)
     output_dir = os.path.join(options.output_directory, config, approach, f'{family}1', f'target{target:.0f}')
