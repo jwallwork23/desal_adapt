@@ -32,12 +32,10 @@ plot_dir = create_directory(os.path.join('plots', config, f'{family}1'))
 # Load data
 root_dir = os.path.join('outputs', config)
 uniform = read_csv('fixed_mesh')
-# tags = ['hessian', 'isotropic_dwr', 'anisotropic_dwr', 'weighted_hessian', 'weighted_gradient']
-# names = ['Hessian-based', 'Isotropic DWR', 'Anisotropic DWR', 'Weighted Hessian', 'Weighted gradient']
-# markers = ['*', '^', 'v', 'o', 'h']
 tags = ['isotropic_dwr', 'anisotropic_dwr', 'weighted_hessian', 'weighted_gradient']
 names = ['Isotropic DWR', 'Anisotropic DWR', 'Weighted Hessian', 'Weighted gradient']
 markers = ['^', 'v', 'o', 'h']
+colours = ['C2', 'C3', 'C4', 'C5']
 runs = []
 labels = []
 for tag, label in zip(tags, names):
@@ -50,8 +48,8 @@ for tag, label in zip(tags, names):
 fig, axes = plt.subplots()
 if uniform is not None:
     axes.semilogx(uniform['dofs'], uniform['qois'], '--', marker='x', label='Uniform')
-for data, label, marker in zip(runs, labels, markers):
-    axes.semilogx(data['dofs'], data['qois'], '--', marker=marker, label=label)
+for data, label, marker, colour in zip(runs, labels, markers, colours):
+    axes.semilogx(data['dofs'], data['qois'], '--', marker=marker, label=label, color=colour)
 axes.set_xlabel('DoF count')
 axes.set_ylabel('Quantity of interest')
 axes.set_xticks([1.0e+03, 1.0e+04, 1.0e+05, 1.0e+06])
@@ -62,9 +60,9 @@ plt.savefig(os.path.join(plot_dir, f'dofs_vs_qoi_{config}.pdf'))
 # Plot QoI convergence vs wallclock
 fig, axes = plt.subplots()
 if uniform is not None:
-    axes.loglog(uniform['wallclock'], uniform['qois'], '--', marker='x', label='Uniform')
-for data, label, marker in zip(runs, labels, markers):
-    axes.loglog(data['wallclock'], data['qois'], '--', marker=marker, label=label)
+    axes.semilogx(uniform['wallclock'], uniform['qois'], '--', marker='x', label='Uniform')
+for data, label, marker, colour in zip(runs, labels, markers, colours):
+    axes.semilogx(data['wallclock'], data['qois'], '--', marker=marker, label=label, color=colour)
 axes.set_xlabel(r'CPU time [$\mathrm s$]')
 axes.set_ylabel('Quantity of interest')
 axes.grid(True)
@@ -83,8 +81,8 @@ for data in runs:
 # Plot QoI error convergence vs DoFs
 fig, axes = plt.subplots()
 axes.loglog(uniform['dofs'][:-1], uniform['error'], '--', marker='x', label='Uniform')
-for data, label, marker in zip(runs, labels, markers):
-    axes.loglog(data['dofs'], data['error'], '--', marker=marker, label=label)
+for data, label, marker, colour in zip(runs, labels, markers, colours):
+    axes.loglog(data['dofs'], data['error'], '--', marker=marker, label=label, color=colour)
 axes.set_xlabel('DoF count')
 axes.set_ylabel(r'Relative QoI error (\%)')
 axes.set_xticks([1.0e+03, 1.0e+04, 1.0e+05, 1.0e+06])
