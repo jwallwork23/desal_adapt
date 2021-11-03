@@ -56,7 +56,8 @@ class PointDischarge3dOptions(PlantOptions):
         # Setup mesh
         self.mesh3d = mesh
         if self.mesh3d is None:
-            self.mesh3d = BoxMesh(50*2**level, 10*2**level, 10*2**level, self.domain_length, self.domain_width, self.domain_width)
+            self.mesh3d = BoxMesh(50*2**level, 10*2**level, 10*2**level,
+                                  self.domain_length, self.domain_width, self.domain_width)
         self.setup_mesh(self.mesh3d)
 
         # Physics
@@ -70,6 +71,8 @@ class PointDischarge3dOptions(PlantOptions):
             2: {},                        # outflow
             3: {'diff_flux': Constant(0.0)},
             4: {'diff_flux': Constant(0.0)},
+            5: {'diff_flux': Constant(0.0)},
+            6: {'diff_flux': Constant(0.0)},
         }
 
         # Point source parametrisation
