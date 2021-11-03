@@ -4,6 +4,7 @@ from thetis.field_defs import field_metadata
 from pyroteus.thetis_compat import FlowSolver2d
 from pyroteus.log import debug
 from . import tracer_eq_3d
+import numpy as np
 
 
 __all__ = ["PlantSolver2d", "PlantSolver3d"]
