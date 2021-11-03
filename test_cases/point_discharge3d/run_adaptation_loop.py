@@ -12,9 +12,6 @@ parser.add_argument('configuration', 'aligned', help="""
     Choose from 'aligned' and 'offset'.
     """)
 parser.add_argument('approach', 'hessian')
-parser.add_argument('-num_refinements', 3, help="""
-    Number of mesh refinements to consider (default 3).
-    """)
 parser.add_argument('-num_repetitions', 1, help="""
     Number of times to repeat the simulation (default 1).
 
@@ -28,16 +25,15 @@ parser.add_argument('-miniter', 3)
 parser.add_argument('-maxiter', 35)
 parser.add_argument('-element_rtol', 0.005)
 parser.add_argument('-qoi_rtol', 0.005)
-parser.add_argument('-h_min', 1.0e-10)
-parser.add_argument('-h_max', 1.0e+01)
+parser.add_argument('-h_min', 1.0e-06)
+parser.add_argument('-h_max', 1.0e+02)
 parser.add_argument('-a_max', 1.0e+05)
+parser.add_argument('-boundary', False)
 parser.add_argument('-flux_form', False)
 parsed_args = parser.parse_args()
 config = parsed_args.configuration
 family = parsed_args.family
 method = parsed_args.recovery_method
-num_refinements = parsed_args.num_refinements
-assert num_refinements >= 1
 num_repetitions = parsed_args.num_repetitions
 assert num_repetitions >= 1
 approach = parsed_args.approach
@@ -59,9 +55,19 @@ h_max = parsed_args.h_max
 assert h_max > h_min
 a_max = parsed_args.a_max
 assert a_max > 1.0
+boundary = parsed_args.boundary
 flux_form = parsed_args.flux_form
 cwd = os.path.join(os.path.dirname(__file__))
 output_dir = create_directory(os.path.join(cwd, 'outputs', config, approach, 'cg1'))
+
+# Set targets to get a relatively even spread
+targets = {
+    'isotropic_dwr': [1000, 4000, 16000, 64000],
+    'anisotropic_dwr': [1000, 4000, 64000, 128000],
+    'weighted_hessian': [500, 4000, 16000, 64000],
+    'weighted_gradient': [500, 4000, 16000, 72000],
+}
+num_refinements = len(targets[approach]) - 1
 
 # Loop over mesh refinement levels
 lines = 'qois,dofs,elements,wallclock,iterations\n'
@@ -69,8 +75,7 @@ tape = get_working_tape()
 if approach == 'hessian':
     stop_annotating()
 converged_reason = None
-for level in range(num_refinements + 1):
-    target = 500.0*4.0**level
+for level, target in enumerate(targets[approach]):
     cpu_times = []
     converged_reason = None
     for rep in range(num_repetitions):
@@ -88,6 +93,17 @@ for level in range(num_refinements + 1):
         converged_reason = None
         for i in range(maxiter):
             tape.clear_tape()
+
+            # Ramp up the target complexity
+            base = 30000.0
+            if i == 0:
+                target_ramp = base
+            elif i == 1:
+                target_ramp = (2*base + target)/3
+            elif i == 2:
+                target_ramp = (base + 2*target)/3
+            else:
+                target_ramp = target
 
             # Setup
             options = PointDischarge3dOptions(configuration=config, family=family, mesh=mesh)
@@ -122,9 +138,10 @@ for level in range(num_refinements + 1):
                                        target_complexity=target,
                                        convergence_rate=alpha,
                                        norm_order=p,
-                                       flux_form=flux_form)
+                                       flux_form=flux_form,
+                                       boundary=boundary)
             if approach not in ('anisotropic_dwr', 'weighted_gradient'):
-                enforce_element_constraints(metric, 1.0e-10, 1.0e+02, 1.0e+12, optimise=True)
+                enforce_element_constraints(metric, 1.0e-30, 1.0e+30, 1.0e+12, optimise=True)
                 space_normalise(metric, target, p)
             enforce_element_constraints(metric, h_min, h_max, a_max, optimise=True)
 
@@ -133,7 +150,7 @@ for level in range(num_refinements + 1):
             elements = mesh.num_cells()
             if elements_old is not None and i > miniter:
                 if np.abs(elements - elements_old) < element_rtol*elements_old:
-                    print_output(f"Converged after {i+1} iterations due to element count convergence.")
+                    print_output(f'Converged after {i+1} iterations due to element count convergence.')
                     converged_reason = 'element'
                     break
             elements_old = elements

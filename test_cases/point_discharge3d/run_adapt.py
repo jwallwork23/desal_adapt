@@ -25,8 +25,9 @@ parser.add_argument('-maxiter', 35)
 parser.add_argument('-element_rtol', 0.005)
 parser.add_argument('-qoi_rtol', 0.005)
 parser.add_argument('-h_min', 1.0e-10)
-parser.add_argument('-h_max', 1.0e+01)
+parser.add_argument('-h_max', 1.0e+02)
 parser.add_argument('-a_max', 1.0e+05)
+parser.add_argument('-boundary', False)
 parser.add_argument('-flux_form', False)
 parser.add_argument('-profile', False)
 parsed_args = parser.parse_args()
@@ -55,6 +56,7 @@ h_max = parsed_args.h_max
 assert h_max > h_min
 a_max = parsed_args.a_max
 assert a_max > 1.0
+boundary = parsed_args.boundary
 flux_form = parsed_args.flux_form
 profile = parsed_args.profile
 
@@ -68,6 +70,17 @@ for i in range(maxiter):
     tape.clear_tape()
     msg = f'Iteration {i+1}/{maxiter} ({approach}, {config})'
     print_output('\n'.join(['\n', '*'*len(msg), msg, '*'*len(msg)]))
+
+    # Ramp up the target complexity
+    base = 30000.0
+    if i == 0:
+        target_ramp = base
+    elif i == 1:
+        target_ramp = (2*base + target)/3
+    elif i == 2:
+        target_ramp = (base + 2*target)/3
+    else:
+        target_ramp = target
 
     # Setup
     options = PointDischarge3dOptions(level=level, family=family, configuration=config, mesh=mesh)
@@ -102,15 +115,20 @@ for i in range(maxiter):
         with firedrake.PETSc.Log.Event("solve_adjoint"):
             compute_gradient(qoi, Control(options.tracer['tracer_3d'].diffusivity))
         adjoint_tracer_3d = solve_blocks[-1].adj_sol
+        if not profile:
+            File(os.path.join(output_dir, 'Tracer3d', 'adjoint_3d.pvd')).write(adjoint_tracer_3d)
         with stop_annotating():
             metric = ee.metric(uv, tracer_3d, uv, adjoint_tracer_3d,
                                target_complexity=target,
                                convergence_rate=alpha,
                                norm_order=p,
-                               flux_form=flux_form)
+                               flux_form=flux_form,
+                               boundary=boundary)
+            if not profile:
+                File(os.path.join(output_dir, 'metric_3d.pvd')).write(metric)
     with stop_annotating():
         if approach not in ('anisotropic_dwr', 'weighted_gradient'):
-            enforce_element_constraints(metric, 1.0e-10, 1.0e+02, 1.0e+12, optimise=profile)
+            enforce_element_constraints(metric, 1.0e-30, 1.0e+30, 1.0e+12, optimise=profile)
             space_normalise(metric, target, p)
         enforce_element_constraints(metric, h_min, h_max, a_max, optimise=profile)
 
