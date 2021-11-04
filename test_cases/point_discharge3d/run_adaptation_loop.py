@@ -1,5 +1,6 @@
 from desal_adapt import *
 from desal_adapt.error_estimation import ErrorEstimator
+from desal_adapt.utility import ramp_complexity
 from firedrake_adjoint import *
 from firedrake.adjoint.solving import get_solve_blocks
 from time import perf_counter
@@ -26,7 +27,7 @@ parser.add_argument('-maxiter', 35)
 parser.add_argument('-element_rtol', 0.005)
 parser.add_argument('-qoi_rtol', 0.005)
 parser.add_argument('-h_min', 1.0e-06)
-parser.add_argument('-h_max', 5.0e+01)
+parser.add_argument('-h_max', 1.0e+02)
 parser.add_argument('-a_max', 1.0e+05)
 parser.add_argument('-boundary', False)
 parser.add_argument('-flux_form', False)
@@ -63,7 +64,7 @@ output_dir = create_directory(os.path.join(cwd, 'outputs', config, approach, 'cg
 # Set targets to get a relatively even spread
 targets = {
     'isotropic_dwr': [1000, 4000, 16000, 64000],
-    'anisotropic_dwr': [1000, 8000, 32000, 128000],
+    'anisotropic_dwr': [2000, 8000, 32000, 128000],
     'weighted_hessian': [1000, 4000, 16000, 64000],
     'weighted_gradient': [1000, 4000, 16000, 64000],
 }
@@ -97,15 +98,7 @@ for level, target in enumerate(targets[approach]):
             tape.clear_tape()
 
             # Ramp up the target complexity
-            base = np.min(targets[approach])
-            if i == 0:
-                target_ramp = base
-            elif i == 1:
-                target_ramp = (2*base + target)/3
-            elif i == 2:
-                target_ramp = (base + 2*target)/3
-            else:
-                target_ramp = target
+            target_ramp = ramp_complexity(3000.0, target, i)
 
             # Setup
             options = PointDischarge3dOptions(configuration=config, family=family, mesh=mesh)
@@ -128,7 +121,10 @@ for level, target in enumerate(targets[approach]):
 
             # Construct metric
             cpu_timestamp_metric = perf_counter()
-            ee = ErrorEstimator(options, error_estimator='difference_quotient', metric=approach, recovery_method=method)
+            ee = ErrorEstimator(options,
+                                error_estimator='difference_quotient',
+                                metric=approach,
+                                recovery_method=method)
             uv = solver_obj.fields.uv_3d
             if approach == 'hessian':
                 metric = ee.recover_hessian(tracer_3d)
@@ -161,7 +157,7 @@ for level, target in enumerate(targets[approach]):
             qoi_old = qoi
         if converged_reason is None:
             converged_reason = 'maxiter'
-            print_output(f"Failed to converge after {maxiter} iterations.")
+            print_output(f'Failed to converge after {maxiter} iterations.')
             continue
         cpu_times.append(perf_counter() - cpu_timestamp)
 

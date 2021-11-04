@@ -1,5 +1,6 @@
 from desal_adapt import *
 from desal_adapt.error_estimation import ErrorEstimator
+from desal_adapt.utility import ramp_complexity
 from firedrake_adjoint import *
 from firedrake.adjoint.solving import get_solve_blocks
 from time import perf_counter
@@ -95,15 +96,7 @@ for level in refs:
             tape.clear_tape()
 
             # Ramp up the target complexity
-            base = 2000.0
-            if i == 0:
-                target_ramp = base
-            elif i == 1:
-                target_ramp = (2*base + target)/3
-            elif i == 2:
-                target_ramp = (base + 2*target)/3
-            else:
-                target_ramp = target
+            target_ramp = ramp_complexity(2000.0, target, i)
 
             # Setup
             options = PointDischarge2dOptions(configuration=config, family=family, mesh=mesh)

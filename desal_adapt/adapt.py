@@ -1,5 +1,6 @@
 from desal_adapt import *
 from desal_adapt.error_estimation import ErrorEstimator
+from desal_adapt.utility import ramp_complexity
 import pyadjoint
 from thetis import print_output, get_functionspace
 from time import perf_counter
@@ -151,7 +152,7 @@ class GoalOrientedDesalinationPlant(GoalOrientedMeshSeq):
         options = self.options
         expected = {'miniter', 'maxiter', 'load_index', 'qoi_rtol', 'element_rtol',
                     'error_indicator', 'approach', 'h_min', 'h_max', 'a_max',
-                    'target', 'flux_form', 'norm_order', 'convergence_rate'}
+                    'target', 'base_complexity', 'flux_form', 'norm_order', 'convergence_rate'}
         if not expected.issubset(set(parsed_args.keys())):
             raise ValueError("Missing required arguments"
                              f" {expected.difference(set(parsed_args.keys()))}")
@@ -159,8 +160,8 @@ class GoalOrientedDesalinationPlant(GoalOrientedMeshSeq):
         end_time = options.simulation_end_time
         dt = options.timestep
         approach = parsed_args.approach
-        hmax = Constant(parsed_args.h_max)
         target = end_time/dt*parsed_args.target  # Convert to space-time complexity
+        base = end_time/dt*parsed_args.base_complexity
         num_subintervals = self.num_subintervals
         timesteps = [dt]*num_subintervals
 
@@ -185,6 +186,9 @@ class GoalOrientedDesalinationPlant(GoalOrientedMeshSeq):
                 converged = True
                 if converged_reason is None:
                     converged_reason = 'maximum number of iterations reached'
+
+            # Ramp up the target complexity
+            target_ramp = ramp_complexity(base, target, fp_iteration)
 
             # Load meshes, if requested
             if load_index > 0 and fp_iteration == load_index:
@@ -307,7 +311,7 @@ class GoalOrientedDesalinationPlant(GoalOrientedMeshSeq):
                                 outfiles[f].write(*args[-2:])
 
                             # Evaluate error indicator
-                            metric_step = ee.metric(*args, target_complexity=2000.0, **parsed_args)
+                            metric_step = ee.metric(*args, target_complexity=parsed_args.base_complexity, **parsed_args)
 
                             # Apply trapezium rule
                             metric_step *= 0.5*dt if j in (0, N-1) else dt
@@ -326,7 +330,7 @@ class GoalOrientedDesalinationPlant(GoalOrientedMeshSeq):
 
             # Process metrics
             print_output(f"\n--- Metric processing {fp_iteration}\n")
-            metrics = space_time_normalise(metrics, end_time, timesteps, target, parsed_args.norm_order)
+            metrics = space_time_normalise(metrics, end_time, timesteps, target_ramp, parsed_args.norm_order)
 
             # Enforce element constraints
             metrics = enforce_element_constraints(

@@ -65,6 +65,9 @@ class Parser(object):
                 Target *spatial* complexity (default {:.4e}), i.e. metric complexity
                 associated with a single mesh iteration.
                 """},
+            'base_complexity': {'type': float, 'msg': """
+                Base *spatial* complexity (default {:.4e}), for ramping target complexity.
+                """},
             'h_min': {'type': float, 'msg': """
                 Minimum tolerated element size in metres (default {:.4e}.
                 """},
