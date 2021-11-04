@@ -26,7 +26,7 @@ parser.add_argument('-maxiter', 35)
 parser.add_argument('-element_rtol', 0.005)
 parser.add_argument('-qoi_rtol', 0.005)
 parser.add_argument('-h_min', 1.0e-06)
-parser.add_argument('-h_max', 1.0e+02)
+parser.add_argument('-h_max', 5.0e+01)
 parser.add_argument('-a_max', 1.0e+05)
 parser.add_argument('-boundary', False)
 parser.add_argument('-flux_form', False)
@@ -62,21 +62,22 @@ output_dir = create_directory(os.path.join(cwd, 'outputs', config, approach, 'cg
 
 # Set targets to get a relatively even spread
 targets = {
-    'isotropic_dwr': [500, 4000, 16000, 64000],
+    'isotropic_dwr': [1000, 4000, 16000, 64000],
     'anisotropic_dwr': [1000, 8000, 32000, 128000],
-    'weighted_hessian': [500, 4000, 16000, 64000],
-    'weighted_gradient': [500, 4000, 16000, 64000],
+    'weighted_hessian': [1000, 4000, 16000, 64000],
+    'weighted_gradient': [1000, 4000, 16000, 64000],
 }
 num_refinements = len(targets[approach]) - 1
 
 # Loop over mesh refinement levels
-lines = 'qois,dofs,elements,wallclock,iterations\n'
+lines = 'qois,dofs,elements,wallclock,iterations,wallclock_metric,converged_reason\n'
 tape = get_working_tape()
 if approach == 'hessian':
     stop_annotating()
 converged_reason = None
 for level, target in enumerate(targets[approach]):
     cpu_times = []
+    cpu_times_metric = []
     converged_reason = None
     for rep in range(num_repetitions):
         if converged_reason == 'diverged':
@@ -85,6 +86,7 @@ for level, target in enumerate(targets[approach]):
               + f' ({approach}, {config})'
         print_output('\n'.join(['\n', '*'*len(msg), msg, '*'*len(msg)]))
         cpu_timestamp = perf_counter()
+        cpu_times_metric.append(0)
 
         # Adapt until mesh convergence is achieved
         mesh = None
@@ -125,6 +127,7 @@ for level, target in enumerate(targets[approach]):
                     break
 
             # Construct metric
+            cpu_timestamp_metric = perf_counter()
             ee = ErrorEstimator(options, error_estimator='difference_quotient', metric=approach, recovery_method=method)
             uv = solver_obj.fields.uv_3d
             if approach == 'hessian':
@@ -144,6 +147,7 @@ for level, target in enumerate(targets[approach]):
                 enforce_element_constraints(metric, 1.0e-30, 1.0e+30, 1.0e+12, optimise=True)
                 space_normalise(metric, target_ramp, p)
             enforce_element_constraints(metric, h_min, h_max, a_max, optimise=True)
+            cpu_times_metric[-1] += perf_counter() - cpu_timestamp_metric
 
             # Adapt mesh and check convergence
             mesh = adapt(mesh, metric)
@@ -156,7 +160,7 @@ for level, target in enumerate(targets[approach]):
             elements_old = elements
             qoi_old = qoi
         if converged_reason is None:
-            converged_reason = 'diverged'
+            converged_reason = 'maxiter'
             print_output(f"Failed to converge after {maxiter} iterations.")
             continue
         cpu_times.append(perf_counter() - cpu_timestamp)
@@ -174,6 +178,7 @@ for level, target in enumerate(targets[approach]):
         qoi = options.qoi(solver_obj.fields.tracer_3d)
     dofs = solver_obj.function_spaces.Q_3d.dof_count
     wallclock = np.mean(cpu_times)
-    lines += f'{qoi},{dofs},{elements},{wallclock},{i+1}\n'
+    wallclock_metric = np.mean(cpu_times_metric)
+    lines += f'{qoi},{dofs},{elements},{wallclock},{i+1},{wallclock_metric},{converged_reason}\n'
     with open(os.path.join(output_dir, 'convergence.log'), 'w+') as log:
         log.write(lines)
