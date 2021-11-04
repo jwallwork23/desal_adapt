@@ -68,6 +68,9 @@ targets = {
     'weighted_hessian': [1000, 4000, 16000, 64000],
     'weighted_gradient': [1000, 4000, 16000, 64000],
 }
+if num_repetitions > 1:
+    for key in targets:
+        targets[key] = [targets[key][-1]]
 num_refinements = len(targets[approach]) - 1
 
 # Loop over mesh refinement levels
