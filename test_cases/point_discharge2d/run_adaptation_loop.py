@@ -68,7 +68,7 @@ output_dir = create_directory(os.path.join(cwd, 'outputs', config, approach, 'cg
 refs = [0, num_refinements] if num_repetitions > 1 else range(num_refinements + 1)
 
 # Loop over mesh refinement levels
-lines = 'qois,dofs,elements,wallclock,iterations,wallclock_metric\n'
+lines = 'qois,dofs,elements,wallclock,iterations,wallclock_metric,converged_reason\n'
 tape = get_working_tape()
 if approach == 'hessian':
     stop_annotating()
@@ -168,7 +168,9 @@ for level in refs:
             elements_old = elements
             qoi_old = qoi
             if i + 1 == maxiter:
-                raise ConvergenceError(f"Failed to converge after {maxiter} iterations.")
+                converged_reason = 'maxiter'
+                print_output(f"Failed to converge after {maxiter} iterations.")
+                continue
         cpu_times.append(perf_counter() - cpu_timestamp)
 
     # Logging
@@ -185,6 +187,6 @@ for level in refs:
     dofs = solver_obj.function_spaces.Q_2d.dof_count
     wallclock = np.mean(cpu_times)
     wallclock_metric = np.mean(cpu_times_metric)
-    lines += f'{qoi},{dofs},{elements},{wallclock},{i+1},{wallclock_metric}\n'
+    lines += f'{qoi},{dofs},{elements},{wallclock},{i+1},{wallclock_metric},{converged_reason}\n'
     with open(os.path.join(output_dir, 'convergence.log'), 'w+') as log:
         log.write(lines)
