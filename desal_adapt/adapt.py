@@ -151,7 +151,7 @@ class GoalOrientedDesalinationPlant(GoalOrientedMeshSeq):
         parsed_args = AttrDict(parsed_args)
         options = self.options
         expected = {'miniter', 'maxiter', 'load_index', 'qoi_rtol', 'element_rtol',
-                    'error_indicator', 'approach', 'h_min', 'h_max', 'a_max',
+                    'error_indicator', 'approach', 'h_min', 'h_max', 'a_max', 'profile',
                     'target', 'base_complexity', 'flux_form', 'norm_order', 'convergence_rate'}
         if not expected.issubset(set(parsed_args.keys())):
             raise ValueError("Missing required arguments"
@@ -164,6 +164,7 @@ class GoalOrientedDesalinationPlant(GoalOrientedMeshSeq):
         base = end_time/dt*parsed_args.base_complexity
         num_subintervals = self.num_subintervals
         timesteps = [dt]*num_subintervals
+        optimise = parsed_args.profile
 
         # Enter fixed point iteration
         miniter = parsed_args.miniter
@@ -191,7 +192,7 @@ class GoalOrientedDesalinationPlant(GoalOrientedMeshSeq):
             target_ramp = ramp_complexity(base, target, fp_iteration)
 
             # Load meshes, if requested
-            if load_index > 0 and fp_iteration == load_index:
+            if load_index > 0 and fp_iteration == load_index and not optimise:
                 for i in range(num_subintervals):
                     mesh_fname = os.path.join(output_dir, f"mesh_fp{fp_iteration}_{i}")
                     if os.path.exists(mesh_fname + '.h5'):
@@ -210,7 +211,7 @@ class GoalOrientedDesalinationPlant(GoalOrientedMeshSeq):
 
             # Load metric data, if available
             loaded = False
-            if fp_iteration == load_index:
+            if fp_iteration == load_index and not optimise:
                 for i, metric in enumerate(metrics):
                     if load_index == 0:
                         metric_fname = os.path.join(self.root_dir, f'metric{i}')
@@ -265,10 +266,10 @@ class GoalOrientedDesalinationPlant(GoalOrientedMeshSeq):
                     break
 
                 # Create vtu output files
-                outfiles.forward = File(os.path.join(output_dir, 'Forward2d.pvd'))
-                outfiles.forward_old = File(os.path.join(output_dir, 'ForwardOld2d.pvd'))
-                outfiles.adjoint_next = File(os.path.join(output_dir, 'AdjointNext2d.pvd'))
-                outfiles.adjoint = File(os.path.join(output_dir, 'Adjoint2d.pvd'))
+                outfiles.forward = None if optimise else File(os.path.join(output_dir, 'Forward2d.pvd'))
+                outfiles.forward_old = None if optimise else File(os.path.join(output_dir, 'ForwardOld2d.pvd'))
+                outfiles.adjoint_next = None if optimise else File(os.path.join(output_dir, 'AdjointNext2d.pvd'))
+                outfiles.adjoint = None if optimise else File(os.path.join(output_dir, 'Adjoint2d.pvd'))
 
                 # Construct metric
                 with pyadjoint.stop_annotating():
@@ -308,7 +309,8 @@ class GoalOrientedDesalinationPlant(GoalOrientedMeshSeq):
                                 args.append(uv.copy(deepcopy=True))
                                 args.append(solutions.tracer_2d[f][i][j])
                                 args[-1].rename("Adjoint salinity" if 'adjoint' in f else "Salinity")
-                                outfiles[f].write(*args[-2:])
+                                if not optimise:
+                                    outfiles[f].write(*args[-2:])
 
                             # Evaluate error indicator
                             metric_step = ee.metric(*args, target_complexity=parsed_args.base_complexity, **parsed_args)
@@ -318,15 +320,16 @@ class GoalOrientedDesalinationPlant(GoalOrientedMeshSeq):
                             metrics[i] += metric_step
 
                     # Store metrics
-                    for i, metric in enumerate(metrics):
-                        print_output(f"Storing {approach} metric data on mesh {i+1}...")
-                        metric_fname = os.path.join(output_dir, f'metric{i}_fp{fp_iteration}')
-                        with DumbCheckpoint(metric_fname, mode=FILE_CREATE) as chk:
-                            chk.store(metric, name="Metric")
-                        if fp_iteration == 0:
-                            metric_fname = os.path.join(self.root_dir, f'metric{i}')
+                    if not optimise:
+                        for i, metric in enumerate(metrics):
+                            print_output(f"Storing {approach} metric data on mesh {i+1}...")
+                            metric_fname = os.path.join(output_dir, f'metric{i}_fp{fp_iteration}')
                             with DumbCheckpoint(metric_fname, mode=FILE_CREATE) as chk:
                                 chk.store(metric, name="Metric")
+                            if fp_iteration == 0:
+                                metric_fname = os.path.join(self.root_dir, f'metric{i}')
+                                with DumbCheckpoint(metric_fname, mode=FILE_CREATE) as chk:
+                                    chk.store(metric, name="Metric")
 
             # Process metrics
             print_output(f"\n--- Metric processing {fp_iteration}\n")
@@ -338,17 +341,20 @@ class GoalOrientedDesalinationPlant(GoalOrientedMeshSeq):
             )
 
             # Plot metrics
-            outfiles.metric = File(os.path.join(output_dir, 'Metric2d.pvd'))
-            for metric in metrics:
-                metric.rename("Metric")
-                outfiles.metric.write(metric)
+            if not optimise:
+                outfiles.metric = File(os.path.join(output_dir, 'Metric2d.pvd'))
+                for metric in metrics:
+                    metric.rename("Metric")
+                    outfiles.metric.write(metric)
 
             # Adapt meshes
             print_output(f"\n--- Mesh adaptation {fp_iteration}\n")
-            outfiles.mesh = File(os.path.join(output_dir, 'Mesh2d.pvd'))
+            if not optimise:
+                outfiles.mesh = File(os.path.join(output_dir, 'Mesh2d.pvd'))
             for i, metric in enumerate(metrics):
                 self.meshes[i] = Mesh(adapt(self.meshes[i], metric))
-                outfiles.mesh.write(self.meshes[i].coordinates)
+                if not optimise:
+                    outfiles.mesh.write(self.meshes[i].coordinates)
             num_cells = [mesh.num_cells() for mesh in self.meshes]
 
             # Check for convergence of element count
@@ -365,7 +371,7 @@ class GoalOrientedDesalinationPlant(GoalOrientedMeshSeq):
                 converged_reason = 'converged element counts'
 
             # Save mesh data to disk
-            if COMM_WORLD.size == 1:
+            if COMM_WORLD.size == 1 and not opimise:
                 for i, mesh in enumerate(self.meshes):
                     mesh_fname = os.path.join(output_dir, f"mesh_fp{fp_iteration+1}_{i}.h5")
                     viewer = PETSc.Viewer().createHDF5(mesh_fname, 'w')

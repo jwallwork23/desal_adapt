@@ -30,6 +30,7 @@ parser.add_argument('-flux_form', False)
 parser.add_argument('-boundary', False)
 parser.add_argument('-error_indicator', 'difference_quotient')
 parser.add_argument('-load_index', 0)
+parser.add_argument('-profile', False)
 parsed_args = parser.parse_args()
 config = parsed_args.configuration
 level = parsed_args.level
