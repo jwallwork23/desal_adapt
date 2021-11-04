@@ -25,8 +25,8 @@ class Parser(object):
             'mixed_L2': {'type': bool, 'msg': """
                 Should L2 projection solve a mixed system? (default {:b}).
                 """},
-            'level': {'type': int, 'msg': """
-                Resolution level of initial mesh (default {:d}).
+            'level': {'type': float, 'msg': """
+                Resolution level of initial mesh (default {:f}).
                 """},
             'quadrature_degree': {'type': int, 'msg': """
                 Quadrature degree for QoI evaluation (default {:d}).

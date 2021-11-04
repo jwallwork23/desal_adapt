@@ -30,6 +30,7 @@ class AnalyticalForcingsOptions(PlantOptions):
         """
         super(AnalyticalForcingsOptions, self).__init__(**kwargs)
         assert configuration in ('aligned', 'offset')
+        level = int(np.round(level))
         assert level >= 0
         assert family in ('cg', 'dg')
         self.configuration = configuration

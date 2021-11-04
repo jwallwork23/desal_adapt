@@ -56,7 +56,9 @@ class PointDischarge3dOptions(PlantOptions):
         # Setup mesh
         self.mesh3d = mesh
         if self.mesh3d is None:
-            self.mesh3d = BoxMesh(50*2**level, 10*2**level, 10*2**level,
+            nx = int(np.round(50*2**level))
+            ny = nz = int(np.round(10*2**level))
+            self.mesh3d = BoxMesh(nx, ny, nz,
                                   self.domain_length, self.domain_width, self.domain_width)
         self.setup_mesh(self.mesh3d)
 

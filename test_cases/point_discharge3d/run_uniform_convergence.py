@@ -31,9 +31,11 @@ quad_degree = parsed_args.quadrature_degree
 cwd = os.path.join(os.path.dirname(__file__))
 output_dir = create_directory(os.path.join(cwd, 'outputs', config, 'fixed_mesh', f'{family}1'))
 
+refs = [0, 1, np.log2(3), 2, np.log2(6), 3, np.log2(12)]
+
 # Loop over mesh refinement levels
 lines = 'qois,dofs,elements,wallclock\n'
-for level in range(num_refinements + 1):
+for level in refs:
     cpu_times = []
     for rep in range(num_repetitions):
         msg = f'Refinement {level}/{num_refinements}, repetition {rep+1}/{num_repetitions}' \
