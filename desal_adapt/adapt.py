@@ -371,7 +371,7 @@ class GoalOrientedDesalinationPlant(GoalOrientedMeshSeq):
                 converged_reason = 'converged element counts'
 
             # Save mesh data to disk
-            if COMM_WORLD.size == 1 and not opimise:
+            if COMM_WORLD.size == 1 and not optimise:
                 for i, mesh in enumerate(self.meshes):
                     mesh_fname = os.path.join(output_dir, f"mesh_fp{fp_iteration+1}_{i}.h5")
                     viewer = PETSc.Viewer().createHDF5(mesh_fname, 'w')
