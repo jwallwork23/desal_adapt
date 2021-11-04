@@ -58,7 +58,7 @@ axes.set_xlabel('DoF count')
 axes.set_ylabel('Quantity of Interest')
 axes.grid(True)
 plt.tight_layout()
-plt.savefig(os.path.join(plot_dir, f'qoi_vs_dofs_{config}.pdf'))
+plt.savefig(os.path.join(plot_dir, f'qoi_vs_dofs_{config}_unsteady.pdf'))
 
 # Plot QoI vs CPU time
 fig, axes = plt.subplots()
@@ -69,7 +69,7 @@ axes.set_xlabel(r'CPU time [$\mathrm s$]')
 axes.set_ylabel('Quantity of Interest')
 axes.grid(True)
 plt.tight_layout()
-plt.savefig(os.path.join(plot_dir, f'qoi_vs_time_{config}.pdf'))
+plt.savefig(os.path.join(plot_dir, f'qoi_vs_time_{config}_unsteady.pdf'))
 
 # Plot QoI vs level
 fig, axes = plt.subplots()
@@ -85,7 +85,7 @@ axes.set_xticks([1.0e+06, 1.0e+07, 1.0e+08])
 axes.set_yticks([9.29e+06, 9.30e+06, 9.31e+06, 9.32e+06, 9.33e+06])
 axes.grid(True)
 plt.tight_layout()
-plt.savefig(os.path.join(plot_dir, f'qoi_vs_target_{config}.pdf'))
+plt.savefig(os.path.join(plot_dir, f'qoi_vs_target_{config}_unsteady.pdf'))
 
 # Plot legend
 fig2, axes2 = plt.subplots()
@@ -93,4 +93,4 @@ legend = axes2.legend(*axes.get_legend_handles_labels(), fontsize=18, frameon=Fa
 fig2.canvas.draw()
 axes2.set_axis_off()
 bbox = legend.get_window_extent().transformed(fig2.dpi_scale_trans.inverted())
-plt.savefig(os.path.join(plot_dir, 'legend.pdf'), bbox_inches=bbox)
+plt.savefig(os.path.join(plot_dir, 'legend_unsteady.pdf'), bbox_inches=bbox)
