@@ -62,10 +62,10 @@ output_dir = create_directory(os.path.join(cwd, 'outputs', config, approach, 'cg
 
 # Set targets to get a relatively even spread
 targets = {
-    'isotropic_dwr': [1000, 4000, 16000, 64000],
-    'anisotropic_dwr': [1000, 4000, 64000, 128000],
+    'isotropic_dwr': [500, 4000, 16000, 64000],
+    'anisotropic_dwr': [1000, 8000, 32000, 128000],
     'weighted_hessian': [500, 4000, 16000, 64000],
-    'weighted_gradient': [500, 4000, 16000, 72000],
+    'weighted_gradient': [500, 4000, 16000, 64000],
 }
 num_refinements = len(targets[approach]) - 1
 
@@ -95,7 +95,7 @@ for level, target in enumerate(targets[approach]):
             tape.clear_tape()
 
             # Ramp up the target complexity
-            base = 30000.0
+            base = np.min(targets[approach])
             if i == 0:
                 target_ramp = base
             elif i == 1:
@@ -135,14 +135,14 @@ for level, target in enumerate(targets[approach]):
                 adjoint_tracer_3d = solve_blocks[-1].adj_sol
                 with stop_annotating():
                     metric = ee.metric(uv, tracer_3d, uv, adjoint_tracer_3d,
-                                       target_complexity=target,
+                                       target_complexity=target_ramp,
                                        convergence_rate=alpha,
                                        norm_order=p,
                                        flux_form=flux_form,
                                        boundary=boundary)
             if approach not in ('anisotropic_dwr', 'weighted_gradient'):
                 enforce_element_constraints(metric, 1.0e-30, 1.0e+30, 1.0e+12, optimise=True)
-                space_normalise(metric, target, p)
+                space_normalise(metric, target_ramp, p)
             enforce_element_constraints(metric, h_min, h_max, a_max, optimise=True)
 
             # Adapt mesh and check convergence

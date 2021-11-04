@@ -75,7 +75,7 @@ for i in range(maxiter):
     print_output('\n'.join(['\n', '*'*len(msg), msg, '*'*len(msg)]))
 
     # Ramp up the target complexity
-    base = 30000.0
+    base = 1000.0 if approach == 'anisotropic_dwr' else 500.0
     if i == 0:
         target_ramp = base
     elif i == 1:
@@ -123,7 +123,7 @@ for i in range(maxiter):
             File(os.path.join(output_dir, 'Tracer3d', 'adjoint_3d.pvd')).write(adjoint_tracer_3d)
         with stop_annotating():
             metric = ee.metric(uv, tracer_3d, uv, adjoint_tracer_3d,
-                               target_complexity=target,
+                               target_complexity=target_ramp,
                                convergence_rate=alpha,
                                norm_order=p,
                                flux_form=flux_form,
@@ -134,7 +134,7 @@ for i in range(maxiter):
     with stop_annotating():
         if approach not in ('anisotropic_dwr', 'weighted_gradient'):
             enforce_element_constraints(metric, 1.0e-30, 1.0e+30, 1.0e+12, optimise=profile)
-            space_normalise(metric, target, p)
+            space_normalise(metric, target_ramp, p)
         enforce_element_constraints(metric, h_min, h_max, a_max, optimise=profile)
 
     # Adapt mesh and check convergence
