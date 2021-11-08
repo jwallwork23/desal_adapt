@@ -27,7 +27,7 @@ markers = ['x', '^', 'v', 'o', 'h']
 colours = ['C0', 'C2', 'C3', 'C4', 'C5']
 data = {approach: {'dofs': [], 'qoi': [], 'wallclock': []} for approach in approaches}
 for approach in approaches:
-    for i in range(5):
+    for i in range(6):
         if approach == 'fixed_mesh':
             # fname = os.path.join(root_dir, approach, f'{family}1', f'levels{i}', 'refs0', 'qoi.log')
             fname = os.path.join(root_dir, approach, f'{family}1', 'levels0', f'refs{i}', 'qoi.log')
@@ -38,7 +38,7 @@ for approach in approaches:
             for key in data[approach]:
                 data[approach][key].append(f[key][0])
         else:
-            fname = os.path.join(root_dir, approach, f'{family}1', f'target{1000*4**i}', 'qoi.log')
+            fname = os.path.join(root_dir, approach, f'{family}1', f'target{1000*2**i}', 'qoi.log')
             if not os.path.exists(fname):
                 print(f"File '{fname}' not found.")
                 continue
@@ -81,7 +81,6 @@ for approach, name, marker, colour in zip(approaches, names, markers, colours):
                   linestyle='--', marker=marker, label=name, color=colour)
 axes.set_xlabel('Target space-time complexity')
 axes.set_ylabel('Quantity of Interest')
-axes.set_xticks([1.0e+06, 1.0e+07, 1.0e+08])
 axes.set_yticks([9.29e+06, 9.30e+06, 9.31e+06, 9.32e+06, 9.33e+06])
 axes.grid(True)
 plt.tight_layout()
