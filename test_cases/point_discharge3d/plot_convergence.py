@@ -46,30 +46,26 @@ for tag, label in zip(tags, names):
 
 # Plot QoI convergence vs DoFs
 fig, axes = plt.subplots()
-if uniform is not None:
-    axes.semilogx(uniform['dofs'], uniform['qois'], '--', marker='x', label='Uniform')
+# if uniform is not None:
+#     axes.semilogx(uniform['dofs'], uniform['qois'], '--', marker='x', label='Uniform')
 for data, label, marker, colour in zip(runs, labels, markers, colours):
     axes.semilogx(data['dofs'], data['qois'], '--', marker=marker, label=label, color=colour)
 axes.set_xlabel('DoF count')
-axes.set_ylabel('Quantity of interest')
+axes.set_ylabel('Quantity of Interest')
 axes.grid(True)
 plt.tight_layout()
 plt.savefig(os.path.join(plot_dir, f'dofs_vs_qoi_{config}_3d.pdf'))
-
-# Plot QoI convergence vs wallclock
-fig, axes = plt.subplots()
-if uniform is not None:
-    axes.semilogx(uniform['wallclock'], uniform['qois'], '--', marker='x', label='Uniform')
-for data, label, marker, colour in zip(runs, labels, markers, colours):
-    axes.semilogx(data['wallclock'], data['qois'], '--', marker=marker, label=label, color=colour)
-axes.set_xlabel(r'CPU time [$\mathrm s$]')
-axes.set_ylabel('Quantity of interest')
-axes.grid(True)
-plt.tight_layout()
-plt.savefig(os.path.join(plot_dir, f'time_vs_qoi_{config}_3d.pdf'))
 if uniform is None:
     print('Cannot plot errors because fixed mesh benchmarks do not exist yet.')
     sys.exit(0)
+
+# Plot legend
+fig2, axes2 = plt.subplots()
+legend = axes2.legend(*axes.get_legend_handles_labels(), fontsize=18, frameon=False, ncol=2)
+fig2.canvas.draw()
+axes2.set_axis_off()
+bbox = legend.get_window_extent().transformed(fig2.dpi_scale_trans.inverted())
+plt.savefig(os.path.join(plot_dir, 'legend_3d.pdf'), bbox_inches=bbox)
 
 # QoI errors
 truth = uniform['qois'][-1]
@@ -96,11 +92,3 @@ axes.set_ylabel(r'Relative QoI error (\%)')
 axes.grid(True)
 plt.tight_layout()
 plt.savefig(os.path.join(plot_dir, f'dofs_vs_qoi_error_semilogx_{config}_3d.pdf'))
-
-# Plot legend
-fig2, axes2 = plt.subplots()
-legend = axes2.legend(*axes.get_legend_handles_labels(), fontsize=18, frameon=False, ncol=3)
-fig2.canvas.draw()
-axes2.set_axis_off()
-bbox = legend.get_window_extent().transformed(fig2.dpi_scale_trans.inverted())
-plt.savefig(os.path.join(plot_dir, 'legend_3d.pdf'), bbox_inches=bbox)
