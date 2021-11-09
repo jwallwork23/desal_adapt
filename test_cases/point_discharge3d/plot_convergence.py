@@ -52,6 +52,7 @@ for data, label, marker, colour in zip(runs, labels, markers, colours):
     axes.semilogx(data['dofs'], data['qois'], '--', marker=marker, label=label, color=colour)
 axes.set_xlabel('DoF count')
 axes.set_ylabel('Quantity of Interest')
+# axes.set_ylim([0.0006, 0.0012])
 axes.grid(True)
 plt.tight_layout()
 plt.savefig(os.path.join(plot_dir, f'dofs_vs_qoi_{config}_3d.pdf'))

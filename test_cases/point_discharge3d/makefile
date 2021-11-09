@@ -13,16 +13,16 @@ snapshot_hessian:
 	@python3 run_adapt.py offset hessian
 
 snapshot_isotropic_dwr:
-	@python3 run_adapt.py offset isotropic_dwr -target 64000
+	@python3 run_adapt.py offset isotropic_dwr -target 70000
 
 snapshot_anisotropic_dwr:
-	@python3 run_adapt.py offset anisotropic_dwr -target 128000
+	@python3 run_adapt.py offset anisotropic_dwr -target 300000
 
 snapshot_weighted_hessian:
 	@python3 run_adapt.py offset weighted_hessian -target 64000
 
 snapshot_weighted_gradient:
-	@python3 run_adapt.py offset weighted_gradient -target 72000
+	@python3 run_adapt.py offset weighted_gradient -target 50000
 
 convergence: uniform hessian isotropic_dwr anisotropic_dwr weighted_hessian weighted_gradient plot
 

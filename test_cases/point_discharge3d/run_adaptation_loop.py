@@ -63,10 +63,10 @@ output_dir = create_directory(os.path.join(cwd, 'outputs', config, approach, 'cg
 
 # Set targets to get a relatively even spread
 targets = {
-    'isotropic_dwr': [1000, 4000, 16000, 64000],
-    'anisotropic_dwr': [2000, 8000, 32000, 128000],
-    'weighted_hessian': [1000, 4000, 16000, 64000],
-    'weighted_gradient': [1000, 4000, 16000, 64000],
+    'isotropic_dwr': [4000, 8000, 16000, 32000, 70000],
+    'anisotropic_dwr': [2000, 8000, 32000, 128000, 300000],
+    'weighted_hessian': [500, 1000, 4000, 16000, 64000],
+    'weighted_gradient': [500, 1000, 4000, 16000, 50000],
 }
 if num_repetitions > 1:
     for key in targets:
