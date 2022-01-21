@@ -1,4 +1,5 @@
 from thetis.utility import *
+from pyroteus.metric import ramp_complexity
 
 
 __all__ = ["anisotropic_cell_size_3d", "ramp_complexity"]
@@ -61,22 +62,3 @@ void eigmin(double minEval[1], const double * J_) {
     kernel = op2.Kernel(kernel_str, 'eigmin', cpp=True, include_dirs=include_dir)
     op2.par_loop(kernel, P0_ten.node_set, min_evalue.dat(op2.RW), J.dat(op2.READ))
     return min_evalue
-
-
-def ramp_complexity(base, target, i, num_iterations=3):
-    """
-    Ramp up the target complexity over the first few iterations.
-
-    :arg base: the base complexity to start from
-    :arg target: the desired complexity
-    :arg i: the current iteration
-    :kwarg num_iterations: how many iterations to ramp over?
-    """
-    assert base > 0.0
-    assert target > 0.0
-    assert i >= 0
-    if num_iterations == 0:
-        return target
-    assert num_iterations > 0
-    alpha = min(i/num_iterations, 1)
-    return alpha*target + (1 - alpha)*base
