@@ -78,17 +78,17 @@ profile_hessian:
 	@cd outputs/offset/hessian/cg1 && flamegraph.pl --title "Hessian-based 3D" logview.txt > flamegraph_offset.svg && rm logview.txt
 
 profile_isotropic_dwr:
-	@python3 run_adapt.py offset isotropic_dwr -profile 1 -target 10000 -log_view :outputs/offset/isotropic_dwr/cg1/logview.txt:ascii_flamegraph
+	@python3 run_adapt.py offset isotropic_dwr -profile 1 -target 70000 -log_view :outputs/offset/isotropic_dwr/cg1/logview.txt:ascii_flamegraph
 	@cd outputs/offset/isotropic_dwr/cg1 && flamegraph.pl --title "Isotropic DWR 3D" logview.txt > flamegraph_offset.svg && rm logview.txt
 
 profile_anisotropic_dwr:
-	@python3 run_adapt.py offset anisotropic_dwr -profile 1 -target 20000 -log_view :outputs/offset/anisotropic_dwr/cg1/logview.txt:ascii_flamegraph
+	@python3 run_adapt.py offset anisotropic_dwr -profile 1 -target 300000 -log_view :outputs/offset/anisotropic_dwr/cg1/logview.txt:ascii_flamegraph
 	@cd outputs/offset/anisotropic_dwr/cg1 && flamegraph.pl --title "Anisotropic DWR 3D" logview.txt > flamegraph_offset.svg && rm logview.txt
 
 profile_weighted_hessian:
-	@python3 run_adapt.py offset weighted_hessian -profile 1 -target 7500 -log_view :outputs/offset/weighted_hessian/cg1/logview.txt:ascii_flamegraph
+	@python3 run_adapt.py offset weighted_hessian -profile 1 -target 64000 -log_view :outputs/offset/weighted_hessian/cg1/logview.txt:ascii_flamegraph
 	@cd outputs/offset/weighted_hessian/cg1 && flamegraph.pl --title "Weighted Hessian 3D" logview.txt > flamegraph_offset.svg && rm logview.txt
 
 profile_weighted_gradient:
-	@python3 run_adapt.py offset weighted_gradient -profile 1 -target 10000 -log_view :outputs/offset/weighted_gradient/cg1/logview.txt:ascii_flamegraph
+	@python3 run_adapt.py offset weighted_gradient -profile 1 -target 50000 -log_view :outputs/offset/weighted_gradient/cg1/logview.txt:ascii_flamegraph
 	@cd outputs/offset/weighted_gradient/cg1 && flamegraph.pl --title "Weighted gradient 3D" logview.txt > flamegraph_offset.svg && rm logview.txt
